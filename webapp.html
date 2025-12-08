@@ -76,10 +76,16 @@
             display: flex;
             gap: 10px;
             margin-bottom: 10px;
+            align-items: center;
         }
 
         .task-item input {
             flex: 1;
+        }
+
+        .task-item select {
+            width: 150px;
+            flex-shrink: 0;
         }
 
         .btn-remove {
@@ -134,7 +140,12 @@
                 <label for="tasks">Виконані завдання *</label>
                 <div class="task-list" id="taskList">
                     <div class="task-item">
-                        <input type="text" placeholder="Опишіть завдання..." required>
+                        <input type="text" class="task-input" placeholder="Опишіть завдання..." required>
+                        <select class="task-status" required>
+                            <option value="completed">✅ Виконано</option>
+                            <option value="in_progress">🔄 В процесі</option>
+                            <option value="blocked">🚫 Блокери</option>
+                        </select>
                         <button type="button" class="btn-remove" onclick="removeTask(this)">✕</button>
                     </div>
                 </div>
@@ -146,17 +157,6 @@
                 <label for="hours">Витрачено годин *</label>
                 <input type="number" id="hours" min="0" max="24" step="0.5" placeholder="8" required>
                 <div class="error" id="hoursError">Вкажіть кількість годин</div>
-            </div>
-
-            <div class="form-group">
-                <label for="status">Статус виконання *</label>
-                <select id="status" required>
-                    <option value="">Оберіть статус...</option>
-                    <option value="completed">✅ Всі завдання виконано</option>
-                    <option value="in_progress">🔄 В процесі</option>
-                    <option value="blocked">🚫 Є блокери</option>
-                </select>
-                <div class="error" id="statusError">Оберіть статус</div>
             </div>
 
             <div class="form-group">
@@ -191,7 +191,12 @@
             const taskItem = document.createElement('div');
             taskItem.className = 'task-item';
             taskItem.innerHTML = `
-                <input type="text" placeholder="Опишіть завдання..." required>
+                <input type="text" class="task-input" placeholder="Опишіть завдання..." required>
+                <select class="task-status" required>
+                    <option value="completed">✅ Виконано</option>
+                    <option value="in_progress">🔄 В процесі</option>
+                    <option value="blocked">🚫 Блокери</option>
+                </select>
                 <button type="button" class="btn-remove" onclick="removeTask(this)">✕</button>
             `;
             taskList.appendChild(taskItem);
@@ -212,11 +217,14 @@
             let isValid = true;
 
             // Перевірка завдань
-            const tasks = Array.from(document.querySelectorAll('.task-item input'))
-                .map(input => input.value.trim())
-                .filter(value => value !== '');
+            const taskItems = document.querySelectorAll('.task-item');
+            const validTasks = Array.from(taskItems).filter(item => {
+                const input = item.querySelector('.task-input');
+                const status = item.querySelector('.task-status');
+                return input && input.value.trim() !== '' && status && status.value;
+            });
             
-            if (tasks.length === 0) {
+            if (validTasks.length === 0) {
                 document.getElementById('tasksError').style.display = 'block';
                 isValid = false;
             } else {
@@ -232,29 +240,29 @@
                 document.getElementById('hoursError').style.display = 'none';
             }
 
-            // Перевірка статусу
-            const status = document.getElementById('status').value;
-            if (!status) {
-                document.getElementById('statusError').style.display = 'block';
-                isValid = false;
-            } else {
-                document.getElementById('statusError').style.display = 'none';
-            }
-
             return isValid;
         }
 
         // Збір даних форми
         function collectFormData() {
-            const tasks = Array.from(document.querySelectorAll('.task-item input'))
-                .map(input => input.value.trim())
-                .filter(value => value !== '');
+            const tasks = Array.from(document.querySelectorAll('.task-item')).map(item => {
+                const input = item.querySelector('.task-input');
+                const status = item.querySelector('.task-status');
+                const taskText = input ? input.value.trim() : '';
+                const taskStatus = status ? status.value : 'completed';
+                
+                if (taskText === '') return null;
+                
+                return {
+                    task: taskText,
+                    status: taskStatus
+                };
+            }).filter(task => task !== null);
 
             return {
                 date: new Date().toISOString().split('T')[0],
                 tasks: tasks,
                 hours: parseFloat(document.getElementById('hours').value),
-                status: document.getElementById('status').value,
                 blockers: document.getElementById('blockers').value.trim(),
                 plans: document.getElementById('plans').value.trim(),
                 notes: document.getElementById('notes').value.trim(),

@@ -268,8 +268,19 @@
         tg.MainButton.onClick(() => {
             if (validateForm()) {
                 const data = collectFormData();
-                tg.sendData(JSON.stringify(data));
-                tg.close();
+                console.log('Відправка даних:', data);
+                console.log('JSON дані:', JSON.stringify(data));
+                
+                try {
+                    tg.sendData(JSON.stringify(data));
+                    console.log('Дані відправлено успішно');
+                    tg.close();
+                } catch (error) {
+                    console.error('Помилка відправки даних:', error);
+                    alert('Помилка відправки звіту: ' + error.message);
+                }
+            } else {
+                console.log('Форма не валідна');
             }
         });
 

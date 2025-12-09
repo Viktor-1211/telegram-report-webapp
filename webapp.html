@@ -73,17 +73,31 @@
         }
 
         .task-item {
+            margin-bottom: 15px;
+            padding: 15px;
+            border: 1px solid var(--tg-theme-hint-color, #ddd);
+            border-radius: 8px;
+            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+        }
+
+        .task-item textarea {
+            width: 100%;
+            margin-bottom: 10px;
+            min-height: 80px;
+        }
+
+        .task-item-controls {
             display: flex;
             gap: 10px;
-            margin-bottom: 10px;
             align-items: center;
         }
 
-        .task-item input {
-            flex: 1;
+        .task-item-controls input[type="number"] {
+            width: 100px;
+            flex-shrink: 0;
         }
 
-        .task-item select {
+        .task-item-controls select {
             width: 150px;
             flex-shrink: 0;
         }
@@ -140,23 +154,20 @@
                 <label for="tasks">Виконані завдання *</label>
                 <div class="task-list" id="taskList">
                     <div class="task-item">
-                        <input type="text" class="task-input" placeholder="Опишіть завдання..." required>
-                        <select class="task-status" required>
-                            <option value="completed">✅ Виконано</option>
-                            <option value="in_progress">🔄 В процесі</option>
-                            <option value="blocked">🚫 Блокери</option>
-                        </select>
-                        <button type="button" class="btn-remove" onclick="removeTask(this)">✕</button>
+                        <textarea class="task-input" placeholder="Опишіть завдання..." required></textarea>
+                        <div class="task-item-controls">
+                            <input type="number" class="task-hours" min="0" max="24" step="0.5" placeholder="Години" required>
+                            <select class="task-status" required>
+                                <option value="completed">✅ Виконано</option>
+                                <option value="in_progress">🔄 В процесі</option>
+                                <option value="blocked">🚫 Блокери</option>
+                            </select>
+                            <button type="button" class="btn-remove" onclick="removeTask(this)">✕ Видалити</button>
+                        </div>
                     </div>
                 </div>
                 <button type="button" class="btn-add" onclick="addTask()">+ Додати завдання</button>
                 <div class="error" id="tasksError">Додайте хоча б одне завдання</div>
-            </div>
-
-            <div class="form-group">
-                <label for="hours">Витрачено годин *</label>
-                <input type="number" id="hours" min="0" max="24" step="0.5" placeholder="8" required>
-                <div class="error" id="hoursError">Вкажіть кількість годин</div>
             </div>
 
             <div class="form-group">
@@ -191,13 +202,16 @@
             const taskItem = document.createElement('div');
             taskItem.className = 'task-item';
             taskItem.innerHTML = `
-                <input type="text" class="task-input" placeholder="Опишіть завдання..." required>
-                <select class="task-status" required>
-                    <option value="completed">✅ Виконано</option>
-                    <option value="in_progress">🔄 В процесі</option>
-                    <option value="blocked">🚫 Блокери</option>
-                </select>
-                <button type="button" class="btn-remove" onclick="removeTask(this)">✕</button>
+                <textarea class="task-input" placeholder="Опишіть завдання..." required></textarea>
+                <div class="task-item-controls">
+                    <input type="number" class="task-hours" min="0" max="24" step="0.5" placeholder="Години" required>
+                    <select class="task-status" required>
+                        <option value="completed">✅ Виконано</option>
+                        <option value="in_progress">🔄 В процесі</option>
+                        <option value="blocked">🚫 Блокери</option>
+                    </select>
+                    <button type="button" class="btn-remove" onclick="removeTask(this)">✕ Видалити</button>
+                </div>
             `;
             taskList.appendChild(taskItem);
         }
@@ -206,7 +220,11 @@
         function removeTask(button) {
             const taskList = document.getElementById('taskList');
             if (taskList.children.length > 1) {
-                button.parentElement.remove();
+                // Знаходимо батьківський task-item (button -> task-item-controls -> task-item)
+                const taskItem = button.closest('.task-item');
+                if (taskItem) {
+                    taskItem.remove();
+                }
             } else {
                 alert('Має бути хоча б одне завдання');
             }
@@ -216,28 +234,24 @@
         function validateForm() {
             let isValid = true;
 
-            // Перевірка завдань
+            // Перевірка завдань та годин
             const taskItems = document.querySelectorAll('.task-item');
             const validTasks = Array.from(taskItems).filter(item => {
                 const input = item.querySelector('.task-input');
+                const hours = item.querySelector('.task-hours');
                 const status = item.querySelector('.task-status');
-                return input && input.value.trim() !== '' && status && status.value;
+                const hasTask = input && input.value.trim() !== '';
+                const hasHours = hours && hours.value && parseFloat(hours.value) > 0;
+                const hasStatus = status && status.value;
+                return hasTask && hasHours && hasStatus;
             });
             
             if (validTasks.length === 0) {
                 document.getElementById('tasksError').style.display = 'block';
+                document.getElementById('tasksError').textContent = 'Додайте хоча б одне завдання з вказаними годинами';
                 isValid = false;
             } else {
                 document.getElementById('tasksError').style.display = 'none';
-            }
-
-            // Перевірка годин
-            const hours = document.getElementById('hours').value;
-            if (!hours || hours <= 0) {
-                document.getElementById('hoursError').style.display = 'block';
-                isValid = false;
-            } else {
-                document.getElementById('hoursError').style.display = 'none';
             }
 
             return isValid;
@@ -246,15 +260,18 @@
         // Збір даних форми
         function collectFormData() {
             const tasks = Array.from(document.querySelectorAll('.task-item')).map(item => {
-                const input = item.querySelector('.task-input');
+                const textarea = item.querySelector('.task-input');
+                const hours = item.querySelector('.task-hours');
                 const status = item.querySelector('.task-status');
-                const taskText = input ? input.value.trim() : '';
+                const taskText = textarea ? textarea.value.trim() : '';
+                const taskHours = hours ? parseFloat(hours.value) : 0;
                 const taskStatus = status ? status.value : 'completed';
                 
-                if (taskText === '') return null;
+                if (taskText === '' || taskHours <= 0) return null;
                 
                 return {
                     task: taskText,
+                    hours: taskHours,
                     status: taskStatus
                 };
             }).filter(task => task !== null);
@@ -262,7 +279,6 @@
             return {
                 date: new Date().toISOString().split('T')[0],
                 tasks: tasks,
-                hours: parseFloat(document.getElementById('hours').value),
                 blockers: document.getElementById('blockers').value.trim(),
                 plans: document.getElementById('plans').value.trim(),
                 notes: document.getElementById('notes').value.trim(),

@@ -88,8 +88,9 @@
 
         .task-item-controls {
             display: flex;
-            gap: 10px;
+            gap: 8px;
             align-items: center;
+            flex-wrap: wrap;
         }
 
         .task-item-controls input[type="number"] {
@@ -110,6 +111,48 @@
             border-radius: 8px;
             cursor: pointer;
             font-size: 14px;
+            white-space: nowrap;
+        }
+
+        /* Адаптивні стилі для мобільних пристроїв */
+        @media (max-width: 480px) {
+            .task-item-controls {
+                gap: 6px;
+            }
+
+            .task-item-controls input[type="number"] {
+                width: 80px;
+                font-size: 14px;
+                padding: 10px 8px;
+            }
+
+            .task-item-controls select {
+                width: 120px;
+                font-size: 14px;
+                padding: 10px 8px;
+            }
+
+            .btn-remove {
+                padding: 10px 12px;
+                font-size: 12px;
+            }
+        }
+
+        /* Для дуже маленьких екранів */
+        @media (max-width: 360px) {
+            .task-item-controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .task-item-controls input[type="number"],
+            .task-item-controls select {
+                width: 100%;
+            }
+
+            .btn-remove {
+                width: 100%;
+            }
         }
 
         .btn-add {
@@ -162,7 +205,7 @@
                                 <option value="in_progress">🔄 В процесі</option>
                                 <option value="blocked">🚫 Блокери</option>
                             </select>
-                            <button type="button" class="btn-remove" onclick="removeTask(this)">✕ Видалити</button>
+                            <button type="button" class="btn-remove" onclick="removeTask(this)">✕</button>
                         </div>
                     </div>
                 </div>
@@ -210,7 +253,7 @@
                         <option value="in_progress">🔄 В процесі</option>
                         <option value="blocked">🚫 Блокери</option>
                     </select>
-                    <button type="button" class="btn-remove" onclick="removeTask(this)">✕ Видалити</button>
+                    <button type="button" class="btn-remove" onclick="removeTask(this)">✕</button>
                 </div>
             `;
             taskList.appendChild(taskItem);

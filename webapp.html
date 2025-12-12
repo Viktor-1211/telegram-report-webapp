@@ -93,8 +93,18 @@
             flex-wrap: wrap;
         }
 
-        .task-item-controls input[type="number"] {
-            width: 100px;
+        .task-hours, .task-minutes {
+            width: 70px;
+            text-align: center;
+        }
+
+        .time-separator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: var(--tg-theme-text-color);
+            width: 20px;
             flex-shrink: 0;
         }
 
@@ -121,12 +131,8 @@
 
         /* Адаптивні стилі для мобільних пристроїв */
         @media (max-width: 480px) {
-            .task-item-controls {
-                gap: 6px;
-            }
-
-            .task-item-controls input[type="number"] {
-                width: 80px;
+            .task-hours, .task-minutes {
+                width: 60px;
                 font-size: 14px;
                 padding: 10px 8px;
             }
@@ -152,9 +158,12 @@
                 align-items: stretch;
             }
 
-            .task-item-controls input[type="number"],
-            .task-item-controls select {
+            .task-hours, .task-minutes, .task-item-controls select {
                 width: 100%;
+            }
+
+            .time-separator {
+                display: none;
             }
 
             .btn-remove {
@@ -207,7 +216,9 @@
                     <div class="task-item">
                         <textarea class="task-input" placeholder="Опишіть завдання..." required></textarea>
                         <div class="task-item-controls">
-                            <input type="number" class="task-hours" min="0" max="24" step="0.5" placeholder="Години" required>
+                            <input type="number" class="task-hours" min="0" max="24" placeholder="Год" required>
+                            <div class="time-separator">:</div>
+                            <input type="number" class="task-minutes" min="0" max="59" placeholder="Хв" required>
                             <select class="task-status" required>
                                 <option value="completed">✅ Виконано</option>
                                 <option value="in_progress">🔄 В процесі</option>
@@ -255,13 +266,15 @@
             taskItem.innerHTML = `
                 <textarea class="task-input" placeholder="Опишіть завдання..." required></textarea>
                 <div class="task-item-controls">
-                    <input type="number" class="task-hours" min="0" max="24" step="0.5" placeholder="Години" required>
+                    <input type="number" class="task-hours" min="0" max="24" placeholder="Год" required>
+                    <div class="time-separator">:</div>
+                    <input type="number" class="task-minutes" min="0" max="59" placeholder="Хв" required>
                     <select class="task-status" required>
                         <option value="completed">✅ Виконано</option>
                         <option value="in_progress">🔄 В процесі</option>
                         <option value="blocked">🚫 Блокери</option>
                     </select>
-                            <button type="button" class="btn-remove" onclick="removeTask(this)" title="Видалити">×</button>
+                    <button type="button" class="btn-remove" onclick="removeTask(this)" title="Видалити">×</button>
                 </div>
             `;
             taskList.appendChild(taskItem);
@@ -271,7 +284,6 @@
         function removeTask(button) {
             const taskList = document.getElementById('taskList');
             if (taskList.children.length > 1) {
-                // Знаходимо батьківський task-item (button -> task-item-controls -> task-item)
                 const taskItem = button.closest('.task-item');
                 if (taskItem) {
                     taskItem.remove();
@@ -284,22 +296,32 @@
         // Валідація форми
         function validateForm() {
             let isValid = true;
-
-            // Перевірка завдань та годин
             const taskItems = document.querySelectorAll('.task-item');
-            const validTasks = Array.from(taskItems).filter(item => {
+            let hasValidTask = false;
+
+            for (const item of taskItems) {
                 const input = item.querySelector('.task-input');
-                const hours = item.querySelector('.task-hours');
+                const hoursEl = item.querySelector('.task-hours');
+                const minutesEl = item.querySelector('.task-minutes');
                 const status = item.querySelector('.task-status');
-                const hasTask = input && input.value.trim() !== '';
-                const hasHours = hours && hours.value && parseFloat(hours.value) > 0;
-                const hasStatus = status && status.value;
-                return hasTask && hasHours && hasStatus;
-            });
-            
-            if (validTasks.length === 0) {
+
+                const taskText = input?.value.trim() || '';
+                const hours = hoursEl?.value !== '' ? parseInt(hoursEl.value, 10) : NaN;
+                const minutes = minutesEl?.value !== '' ? parseInt(minutesEl.value, 10) : NaN;
+                const statusValue = status?.value || '';
+
+                const validHours = !isNaN(hours) && hours >= 0 && hours <= 24;
+                const validMinutes = !isNaN(minutes) && minutes >= 0 && minutes <= 59;
+                const totalTimeMinutes = (validHours ? hours : 0) * 60 + (validMinutes ? minutes : 0);
+
+                if (taskText && statusValue && totalTimeMinutes > 0) {
+                    hasValidTask = true;
+                    break;
+                }
+            }
+
+            if (!hasValidTask) {
                 document.getElementById('tasksError').style.display = 'block';
-                document.getElementById('tasksError').textContent = 'Додайте хоча б одне завдання з вказаними годинами';
                 isValid = false;
             } else {
                 document.getElementById('tasksError').style.display = 'none';
@@ -312,18 +334,25 @@
         function collectFormData() {
             const tasks = Array.from(document.querySelectorAll('.task-item')).map(item => {
                 const textarea = item.querySelector('.task-input');
-                const hours = item.querySelector('.task-hours');
+                const hoursEl = item.querySelector('.task-hours');
+                const minutesEl = item.querySelector('.task-minutes');
                 const status = item.querySelector('.task-status');
-                const taskText = textarea ? textarea.value.trim() : '';
-                const taskHours = hours ? parseFloat(hours.value) : 0;
-                const taskStatus = status ? status.value : 'completed';
-                
-                if (taskText === '' || taskHours <= 0) return null;
-                
+
+                const taskText = textarea?.value.trim() || '';
+                const hours = hoursEl?.value !== '' ? parseInt(hoursEl.value, 10) : 0;
+                const minutes = minutesEl?.value !== '' ? parseInt(minutesEl.value, 10) : 0;
+                const statusValue = status?.value || 'completed';
+
+                const totalMinutes = hours * 60 + minutes;
+                if (!taskText || totalMinutes === 0) return null;
+
+                // Перетворюємо у десяткові години (наприклад, 1 год 30 хв → 1.5)
+                const totalHours = totalMinutes / 60;
+
                 return {
                     task: taskText,
-                    hours: taskHours,
-                    status: taskStatus
+                    hours: parseFloat(totalHours.toFixed(2)), // зберігаємо з точністю до 2 знаків
+                    status: statusValue
                 };
             }).filter(task => task !== null);
 
@@ -345,17 +374,14 @@
                 const data = collectFormData();
                 console.log('Відправка даних:', data);
                 console.log('JSON дані:', JSON.stringify(data));
-                
+
                 try {
                     tg.sendData(JSON.stringify(data));
-                    console.log('Дані відправлено успішно');
                     tg.close();
                 } catch (error) {
                     console.error('Помилка відправки даних:', error);
                     alert('Помилка відправки звіту: ' + error.message);
                 }
-            } else {
-                console.log('Форма не валідна');
             }
         });
 

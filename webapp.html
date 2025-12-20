@@ -86,6 +86,16 @@
             min-height: 80px;
         }
 
+        .task-additional-fields {
+            margin-top: 10px;
+        }
+
+        .task-additional-fields textarea {
+            min-height: 60px;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
         .task-item-controls {
             display: flex;
             gap: 8px;
@@ -226,6 +236,11 @@
                             </select>
                             <button type="button" class="btn-remove" onclick="removeTask(this)" title="Видалити">×</button>
                         </div>
+                        <div class="task-additional-fields">
+                            <textarea class="task-blockers" placeholder="Проблеми/Блокери для цього завдання (необов'язково)"></textarea>
+                            <textarea class="task-plans" placeholder="Плани для цього завдання (необов'язково)"></textarea>
+                            <textarea class="task-notes" placeholder="Додаткові нотатки для цього завдання (необов'язково)"></textarea>
+                        </div>
                     </div>
                 </div>
                 <button type="button" class="btn-add" onclick="addTask()">+ Додати завдання</button>
@@ -275,6 +290,11 @@
                         <option value="blocked">🚫 Блокери</option>
                     </select>
                     <button type="button" class="btn-remove" onclick="removeTask(this)" title="Видалити">×</button>
+                </div>
+                <div class="task-additional-fields">
+                    <textarea class="task-blockers" placeholder="Проблеми/Блокери для цього завдання (необов'язково)"></textarea>
+                    <textarea class="task-plans" placeholder="Плани для цього завдання (необов'язково)"></textarea>
+                    <textarea class="task-notes" placeholder="Додаткові нотатки для цього завдання (необов'язково)"></textarea>
                 </div>
             `;
             taskList.appendChild(taskItem);
@@ -337,22 +357,30 @@
                 const hoursEl = item.querySelector('.task-hours');
                 const minutesEl = item.querySelector('.task-minutes');
                 const status = item.querySelector('.task-status');
+                const blockersEl = item.querySelector('.task-blockers');
+                const plansEl = item.querySelector('.task-plans');
+                const notesEl = item.querySelector('.task-notes');
 
                 const taskText = textarea?.value.trim() || '';
                 const hours = hoursEl?.value !== '' ? parseInt(hoursEl.value, 10) : 0;
                 const minutes = minutesEl?.value !== '' ? parseInt(minutesEl.value, 10) : 0;
                 const statusValue = status?.value || 'completed';
+                const blockers = blockersEl?.value.trim() || '';
+                const plans = plansEl?.value.trim() || '';
+                const notes = notesEl?.value.trim() || '';
 
                 const totalMinutes = hours * 60 + minutes;
                 if (!taskText || totalMinutes === 0) return null;
 
-                // Перетворюємо у десяткові години (наприклад, 1 год 30 хв → 1.5)
-                const totalHours = totalMinutes / 60;
-
+                // Зберігаємо години та хвилини окремо, а також додаткові поля
                 return {
                     task: taskText,
-                    hours: parseFloat(totalHours.toFixed(2)), // зберігаємо з точністю до 2 знаків
-                    status: statusValue
+                    hours: hours,
+                    minutes: minutes,
+                    status: statusValue,
+                    blockers: blockers,
+                    plans: plans,
+                    notes: notes
                 };
             }).filter(task => task !== null);
 
@@ -396,3 +424,4 @@
     </script>
 </body>
 </html>
+

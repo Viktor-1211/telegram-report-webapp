@@ -246,21 +246,6 @@
                 <button type="button" class="btn-add" onclick="addTask()">+ Додати завдання</button>
                 <div class="error" id="tasksError">Додайте хоча б одне завдання</div>
             </div>
-
-            <div class="form-group">
-                <label for="blockers">Проблеми/Блокери (необов'язково)</label>
-                <textarea id="blockers" placeholder="Опишіть проблеми, якщо є..."></textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="plans">Плани на завтра (необов'язково)</label>
-                <textarea id="plans" placeholder="Що плануєте робити завтра..."></textarea>
-            </div>
-
-            <div class="form-group">
-                <label for="notes">Додаткові нотатки (необов'язково)</label>
-                <textarea id="notes" placeholder="Інші коментарі..."></textarea>
-            </div>
         </form>
     </div>
 
@@ -387,9 +372,6 @@
             return {
                 date: new Date().toISOString().split('T')[0],
                 tasks: tasks,
-                blockers: document.getElementById('blockers').value.trim(),
-                plans: document.getElementById('plans').value.trim(),
-                notes: document.getElementById('notes').value.trim(),
                 timestamp: new Date().toISOString()
             };
         }

@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Щоденний звіт</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
+            background: var(--tg-theme-bg-color, #ffffff);
+            color: var(--tg-theme-text-color, #000000);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: var(--tg-theme-text-color);
+        }
+
+        .date {
+            color: var(--tg-theme-hint-color, #999);
+            margin-bottom: 20px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--tg-theme-text-color);
+        }
+
+        input, textarea, select {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid var(--tg-theme-hint-color, #ddd);
+            border-radius: 8px;
+            font-size: 16px;
+            background: var(--tg-theme-bg-color, #fff);
+            color: var(--tg-theme-text-color, #000);
+            font-family: inherit;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        input:focus, textarea:focus, select:focus {
+            outline: none;
+            border-color: var(--tg-theme-button-color, #3390ec);
+        }
+
+        .task-list {
+            margin-top: 10px;
+        }
+
+        .task-item {
+            margin-bottom: 20px;
+            padding: 15px;
+            border: 1px solid var(--tg-theme-hint-color, #ddd);
+            border-radius: 8px;
+            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+        }
+
+        .task-item .task-theme {
+            font-weight: bold;
+            font-size: 16px;
+            margin-bottom: 8px;
+            min-height: 50px;
+        }
+
+        .task-item .task-description {
+            margin-bottom: 10px;
+            min-height: 100px;
+        }
+
+        .task-item-controls {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .task-hours, .task-minutes {
+            width: 70px;
+            text-align: center;
+        }
+
+        .time-separator {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: var(--tg-theme-text-color);
+            width: 20px;
+            flex-shrink: 0;
+        }
+
+        .task-item-controls select {
+            width: 150px;
+            flex-shrink: 0;
+        }
+
+        .btn-remove {
+            padding: 12px;
+            background: #ff3b30;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 18px;
+            width: 40px;
+            height: 40px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+
+        .btn-add {
+            padding: 10px 16px;
+            background: var(--tg-theme-button-color, #3390ec);
+            color: var(--tg-theme-button-text-color, #fff);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 14px;
+            margin-top: 10px;
+        }
+
+        .error {
+            color: #ff3b30;
+            font-size: 14px;
+            margin-top: 5px;
+            display: none;
+        }
+
+        .success-message {
+            background: #34c759;
+            color: white;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+
+        @media (max-width: 480px) {
+            .task-hours, .task-minutes {
+                width: 60px;
+                font-size: 14px;
+                padding: 10px 8px;
+            }
+
+            .task-item-controls select {
+                width: 120px;
+                font-size: 14px;
+                padding: 10px 8px;
+            }
+
+            .btn-remove {
+                width: 36px;
+                height: 36px;
+                padding: 8px;
+                font-size: 16px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📧 Щоденний звіт (як лист на пошті)</h1>
+        <div class="date" id="currentDate"></div>
+
+        <div class="success-message" id="successMessage">
+            ✅ Звіт успішно відправлено!
+        </div>
+
+        <form id="reportForm">
+            <div class="form-group">
+                <label for="tasks">Виконані завдання *</label>
+                <div class="task-list" id="taskList">
+                    <div class="task-item">
+                        <input type="text" class="task-theme" placeholder="ТЕМА" required>
+                        <textarea class="task-description" placeholder="Опис..." required></textarea>
+                        <div class="task-item-controls">
+                            <input type="number" class="task-hours" min="0" max="24" placeholder="Год" required>
+                            <div class="time-separator">:</div>
+                            <input type="number" class="task-minutes" min="0" max="59" placeholder="Хв" required>
+                            <select class="task-status" required>
+                                <option value="completed">✅ Виконано</option>
+                                <option value="in_progress">🔄 В процесі</option>
+                                <option value="blocked">🚫 Блокери</option>
+                            </select>
+                            <button type="button" class="btn-remove" onclick="removeTask(this)" title="Видалити">×</button>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn-add" onclick="addTask()">+ Додати завдання</button>
+                <div class="error" id="tasksError">Додайте хоча б одне завдання</div>
+            </div>
+        </form>
+    </div>
+
+    <script>
+        const tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // Встановлюємо поточну дату
+        const dateOptions = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
+        document.getElementById('currentDate').textContent = 
+            new Date().toLocaleDateString('uk-UA', dateOptions);
+
+        // Додавання нового завдання
+        function addTask() {
+            const taskList = document.getElementById('taskList');
+            const taskItem = document.createElement('div');
+            taskItem.className = 'task-item';
+            taskItem.innerHTML = `
+                <input type="text" class="task-theme" placeholder="ТЕМА" required>
+                <textarea class="task-description" placeholder="Опис..." required></textarea>
+                <div class="task-item-controls">
+                    <input type="number" class="task-hours" min="0" max="24" placeholder="Год" required>
+                    <div class="time-separator">:</div>
+                    <input type="number" class="task-minutes" min="0" max="59" placeholder="Хв" required>
+                    <select class="task-status" required>
+                        <option value="completed">✅ Виконано</option>
+                        <option value="in_progress">🔄 В процесі</option>
+                        <option value="blocked">🚫 Блокери</option>
+                    </select>
+                    <button type="button" class="btn-remove" onclick="removeTask(this)" title="Видалити">×</button>
+                </div>
+            `;
+            taskList.appendChild(taskItem);
+        }
+
+        // Видалення завдання
+        function removeTask(button) {
+            const taskList = document.getElementById('taskList');
+            if (taskList.children.length > 1) {
+                const taskItem = button.closest('.task-item');
+                if (taskItem) {
+                    taskItem.remove();
+                }
+            } else {
+                alert('Має бути хоча б одне завдання');
+            }
+        }
+
+        // Валідація форми
+        function validateForm() {
+            let isValid = true;
+            const taskItems = document.querySelectorAll('.task-item');
+            let hasValidTask = false;
+
+            for (const item of taskItems) {
+                const theme = item.querySelector('.task-theme');
+                const description = item.querySelector('.task-description');
+                const hoursEl = item.querySelector('.task-hours');
+                const minutesEl = item.querySelector('.task-minutes');
+                const status = item.querySelector('.task-status');
+
+                const themeText = theme?.value.trim() || '';
+                const descText = description?.value.trim() || '';
+                const hours = hoursEl?.value !== '' ? parseInt(hoursEl.value, 10) : NaN;
+                const minutes = minutesEl?.value !== '' ? parseInt(minutesEl.value, 10) : NaN;
+                const statusValue = status?.value || '';
+
+                const validHours = !isNaN(hours) && hours >= 0 && hours <= 24;
+                const validMinutes = !isNaN(minutes) && minutes >= 0 && minutes <= 59;
+                const totalTimeMinutes = (validHours ? hours : 0) * 60 + (validMinutes ? minutes : 0);
+
+                if (themeText && descText && statusValue && totalTimeMinutes > 0) {
+                    hasValidTask = true;
+                    break;
+                }
+            }
+
+            if (!hasValidTask) {
+                document.getElementById('tasksError').style.display = 'block';
+                isValid = false;
+            } else {
+                document.getElementById('tasksError').style.display = 'none';
+            }
+
+            return isValid;
+        }
+
+        // Збір даних форми
+        function collectFormData() {
+            const tasks = Array.from(document.querySelectorAll('.task-item')).map(item => {
+                const theme = item.querySelector('.task-theme');
+                const description = item.querySelector('.task-description');
+                const hoursEl = item.querySelector('.task-hours');
+                const minutesEl = item.querySelector('.task-minutes');
+                const status = item.querySelector('.task-status');
+
+                const themeText = theme?.value.trim() || '';
+                const descText = description?.value.trim() || '';
+                const hours = hoursEl?.value !== '' ? parseInt(hoursEl.value, 10) : 0;
+                const minutes = minutesEl?.value !== '' ? parseInt(minutesEl.value, 10) : 0;
+                const statusValue = status?.value || 'completed';
+
+                const totalMinutes = hours * 60 + minutes;
+                if (!themeText || !descText || totalMinutes === 0) return null;
+
+                // Об'єднуємо тему та опис в одне поле task
+                const taskText = `ТЕМА: ${themeText}\n\nОпис: ${descText}`;
+
+                return {
+                    task: taskText,
+                    hours: hours,
+                    minutes: minutes,
+                    status: statusValue
+                };
+            }).filter(task => task !== null);
+
+            // Отримуємо локальну дату (не UTC) для коректного відображення
+            const now = new Date();
+            const year = now.getFullYear();
+            const month = String(now.getMonth() + 1).padStart(2, '0');
+            const day = String(now.getDate()).padStart(2, '0');
+            const dateString = `${year}-${month}-${day}`;
+
+            return {
+                date: dateString,
+                tasks: tasks,
+                timestamp: new Date().toISOString()
+            };
+        }
+
+        // Головна кнопка Telegram
+        tg.MainButton.setText('Відправити звіт');
+        tg.MainButton.show();
+        tg.MainButton.onClick(() => {
+            if (validateForm()) {
+                const data = collectFormData();
+                console.log('Відправка даних:', data);
+                console.log('JSON дані:', JSON.stringify(data));
+
+                try {
+                    tg.sendData(JSON.stringify(data));
+                    tg.close();
+                } catch (error) {
+                    console.error('Помилка відправки даних:', error);
+                    alert('Помилка відправки звіту: ' + error.message);
+                }
+            }
+        });
+
+        // Анімація кнопки при введенні
+        document.getElementById('reportForm').addEventListener('input', () => {
+            if (validateForm()) {
+                tg.MainButton.color = '#34c759';
+            } else {
+                tg.MainButton.color = tg.themeParams.button_color || '#3390ec';
+            }
+        });
+    </script>
+</body>
+</html>
+

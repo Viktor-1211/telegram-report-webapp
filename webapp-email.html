@@ -198,7 +198,7 @@
                 <label for="tasks">Виконані завдання *</label>
                 <div class="task-list" id="taskList">
                     <div class="task-item">
-                        <input type="text" class="task-theme" placeholder="ТЕМА" required>
+                        <input type="text" class="task-theme" placeholder="Завдання" required>
                         <textarea class="task-description" placeholder="Опис..." required></textarea>
                         <div class="task-item-controls">
                             <input type="number" class="task-hours" min="0" max="24" placeholder="Год" required>
@@ -234,7 +234,7 @@
             const taskItem = document.createElement('div');
             taskItem.className = 'task-item';
             taskItem.innerHTML = `
-                <input type="text" class="task-theme" placeholder="ТЕМА" required>
+                <input type="text" class="task-theme" placeholder="Завдання" required>
                 <textarea class="task-description" placeholder="Опис..." required></textarea>
                 <div class="task-item-controls">
                     <input type="number" class="task-hours" min="0" max="24" placeholder="Год" required>
@@ -321,8 +321,8 @@
                 const totalMinutes = hours * 60 + minutes;
                 if (!themeText || !descText || totalMinutes === 0) return null;
 
-                // Об'єднуємо тему та опис в одне поле task
-                const taskText = `ТЕМА: ${themeText}\n\nОпис: ${descText}`;
+                // Об'єднуємо завдання та опис в одне поле task
+                const taskText = `Завдання: ${themeText}\n\nОпис: ${descText}`;
 
                 return {
                     task: taskText,

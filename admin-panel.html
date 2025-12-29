@@ -140,90 +140,6 @@
             background: rgba(255, 59, 48, 0.1);
         }
 
-        /* Списки */
-        .list-item {
-            background: #f8f9fa;
-            border-radius: 12px;
-            padding: 15px;
-            margin-bottom: 10px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .list-item-info {
-            flex: 1;
-        }
-
-        .list-item-name {
-            font-weight: 600;
-            color: #333;
-            margin-bottom: 4px;
-        }
-
-        .list-item-detail {
-            font-size: 13px;
-            color: #888;
-        }
-
-        .list-item-actions {
-            display: flex;
-            gap: 8px;
-        }
-
-        .icon-btn {
-            background: white;
-            border: none;
-            border-radius: 8px;
-            padding: 8px 12px;
-            cursor: pointer;
-            font-size: 16px;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-            transition: all 0.2s ease;
-        }
-
-        .icon-btn:hover {
-            transform: scale(1.1);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        }
-
-        .icon-btn:active {
-            transform: scale(0.95);
-        }
-
-        /* Форми */
-        .form-group {
-            margin-bottom: 15px;
-        }
-
-        .form-label {
-            display: block;
-            font-weight: 600;
-            color: #667eea;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-
-        .form-input {
-            width: 100%;
-            padding: 12px;
-            border: 2px solid #e0e0e0;
-            border-radius: 10px;
-            font-size: 14px;
-            transition: all 0.3s ease;
-        }
-
-        .form-input:focus {
-            outline: none;
-            border-color: #667eea;
-            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
-        }
-
-        .form-textarea {
-            min-height: 100px;
-            resize: vertical;
-        }
-
         /* Модальні вікна */
         .modal {
             display: none;
@@ -287,6 +203,39 @@
             transform: rotate(90deg);
         }
 
+        /* Форми */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
         /* Кнопки */
         .btn {
             padding: 12px 24px;
@@ -345,35 +294,35 @@
             color: white;
         }
 
-        .badge-success {
-            background: #34c759;
-            color: white;
-        }
-
-        .badge-warning {
-            background: #ff9500;
-            color: white;
-        }
-
         /* Завантаження */
         .loading {
             display: none;
-            text-align: center;
-            padding: 40px 20px;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(102, 126, 234, 0.6);
+            z-index: 2000;
+            align-items: center;
+            justify-content: center;
+            flex-direction: column;
+            color: white;
+            backdrop-filter: blur(5px);
         }
 
         .loading.active {
-            display: block;
+            display: flex;
         }
 
         .spinner {
-            border: 4px solid rgba(102, 126, 234, 0.2);
+            border: 4px solid rgba(255, 255, 255, 0.3);
             border-radius: 50%;
-            border-top: 4px solid #667eea;
+            border-top: 4px solid white;
             width: 50px;
             height: 50px;
             animation: spin 1s linear infinite;
-            margin: 0 auto 15px;
+            margin-bottom: 15px;
         }
 
         @keyframes spin {
@@ -408,41 +357,7 @@
             }
         }
 
-        /* Empty state */
-        .empty-state {
-            text-align: center;
-            padding: 40px 20px;
-            color: #888;
-        }
-
-        .empty-state-icon {
-            font-size: 48px;
-            margin-bottom: 15px;
-        }
-
-        /* Навігація назад */
-        .back-btn {
-            background: rgba(255, 255, 255, 0.2);
-            color: white;
-            border: none;
-            border-radius: 12px;
-            padding: 10px 20px;
-            margin-bottom: 15px;
-            cursor: pointer;
-            font-size: 14px;
-            font-weight: 600;
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            transition: all 0.3s ease;
-        }
-
-        .back-btn:hover {
-            background: rgba(255, 255, 255, 0.3);
-            transform: translateX(-5px);
-        }
-
-        /* Сповіщення */
+        /* Toast */
         .toast {
             position: fixed;
             bottom: 20px;
@@ -451,8 +366,8 @@
             background: white;
             padding: 15px 25px;
             border-radius: 12px;
-            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
-            z-index: 2000;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            z-index: 3000;
             display: none;
             animation: slideUp 0.3s ease;
         }
@@ -460,238 +375,120 @@
         .toast.active {
             display: block;
         }
-
-        .toast-success {
-            border-left: 4px solid #34c759;
-        }
-
-        .toast-error {
-            border-left: 4px solid #ff3b30;
-        }
-
-        /* Адаптивність */
-        @media (max-width: 600px) {
-            .container {
-                padding: 15px;
-            }
-
-            .header h1 {
-                font-size: 20px;
-            }
-
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .stat-value {
-                font-size: 24px;
-            }
-
-            .actions-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-
-        /* Анімації появи */
-        .fade-in {
-            animation: fadeIn 0.5s ease forwards;
-        }
-
-        .slide-up {
-            animation: slideUp 0.5s ease forwards;
-        }
     </style>
 </head>
 
 <body>
     <div class="container">
-        <!-- Головний екран -->
-        <div id="mainScreen">
-            <!-- Заголовок -->
-            <div class="header fade-in">
-                <h1>
-                    <span>🔐</span>
-                    Адмін-панель
-                </h1>
-                <div class="header-subtitle">Керування ботом звітів</div>
+        <div class="header">
+            <h1>🔐 Адмін-панель</h1>
+            <div class="header-subtitle">Керування ботом звітів</div>
 
-                <div class="stats-grid">
-                    <div class="stat-card">
-                        <div class="stat-value" id="totalUsers">-</div>
-                        <div class="stat-label">👥 Користувачів</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="activeUsers">-</div>
-                        <div class="stat-label">✅ Активних</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="totalReports">-</div>
-                        <div class="stat-label">📝 Звітів</div>
-                    </div>
-                    <div class="stat-card">
-                        <div class="stat-value" id="pendingUsers">-</div>
-                        <div class="stat-label">⏳ Очікують</div>
-                    </div>
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalUsers">0</div>
+                    <div class="stat-label">👥 Користувачів</div>
                 </div>
-            </div>
-
-            <!-- Управління користувачами -->
-            <div class="section slide-up">
-                <div class="section-title">
-                    <span>👥</span>
-                    Користувачі
+                <div class="stat-card">
+                    <div class="stat-value" id="activeUsers">0</div>
+                    <div class="stat-label">✅ Активних</div>
                 </div>
-                <div class="actions-grid">
-                    <button class="action-btn" onclick="showPendingUsers()">
-                        <div>⏳ Очікуючі</div>
-                        <span class="badge badge-danger" id="pendingBadge" style="display: none;">0</span>
-                    </button>
-                    <button class="action-btn" onclick="showAllUsers()">
-                        <div>👥 Всі користувачі</div>
-                    </button>
-                    <button class="action-btn" onclick="showRenameUser()">
-                        <div>✏️ Перейменувати</div>
-                    </button>
-                    <button class="action-btn" onclick="showBlockUser()">
-                        <div>🚫 Блокувати</div>
-                    </button>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalReports">0</div>
+                    <div class="stat-label">📝 Звітів</div>
                 </div>
-            </div>
-
-            <!-- Управління звітами -->
-            <div class="section slide-up">
-                <div class="section-title">
-                    <span>📊</span>
-                    Звіти
-                </div>
-                <div class="actions-grid">
-                    <button class="action-btn" onclick="showStats()">
-                        <div>📊 Статистика</div>
-                    </button>
-                    <button class="action-btn" onclick="showReports()">
-                        <div>📋 Всі звіти</div>
-                    </button>
-                    <button class="action-btn" onclick="exportReports()">
-                        <div>📤 Експорт</div>
-                    </button>
-                    <button class="action-btn danger" onclick="confirmClearReports()">
-                        <div>🗑️ Очистити</div>
-                    </button>
-                </div>
-            </div>
-
-            <!-- Комунікація -->
-            <div class="section slide-up">
-                <div class="section-title">
-                    <span>📢</span>
-                    Комунікація
-                </div>
-                <div class="actions-grid">
-                    <button class="action-btn" onclick="showAnnouncement()">
-                        <div>📢 Надіслати всім</div>
-                    </button>
-                    <button class="action-btn" onclick="syncOdoo()">
-                        <div>🔄 Синхронізація Odoo</div>
-                    </button>
+                <div class="stat-card" onclick="showPendingUsers()">
+                    <div class="stat-value" id="pendingUsers">0</div>
+                    <div class="stat-label">⏳ Очікують</div>
                 </div>
             </div>
         </div>
 
-        <!-- Завантаження -->
-        <div class="loading" id="loading">
-            <div class="spinner"></div>
-            <div style="color: white; font-weight: 600;">Завантаження...</div>
-        </div>
-    </div>
-
-
-    <!-- Модальне вікно: Список (користувачі, очікуючі, звіти) -->
-    <div class="modal" id="listModal">
-        <div class="modal-content" style="max-width: 600px;">
-            <div class="modal-header">
-                <div class="modal-title" id="listModalTitle">Список</div>
-                <button class="modal-close" onclick="closeModal('listModal')">×</button>
+        <div class="section">
+            <div class="section-title">👥 Користувачі</div>
+            <div class="actions-grid">
+                <button class="action-btn" onclick="showPendingUsers()">
+                    ⏳ Очікуючі
+                    <span class="badge badge-danger" id="pendingBadge" style="display: none;">0</span>
+                </button>
+                <button class="action-btn" onclick="showAllUsers()">👥 Всі користувачі</button>
+                <button class="action-btn" onclick="showRenameUser()">✏️ Перейменувати</button>
+                <button class="action-btn" onclick="showBlockUser()">🚫 Блокувати</button>
             </div>
-            <div id="listModalContent">
-                <!-- Контент завантажується сюди -->
+        </div>
+
+        <div class="section">
+            <div class="section-title">📊 Звіти</div>
+            <div class="actions-grid">
+                <button class="action-btn" onclick="showStats()">📊 Статистика</button>
+                <button class="action-btn" onclick="showReports()">📋 Всі звіти</button>
+                <button class="action-btn" onclick="exportReports()">📤 Експорт</button>
+                <button class="action-btn danger" onclick="confirmClearReports()">🗑️ Очистити</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">📢 Комунікація</div>
+            <div class="actions-grid">
+                <button class="action-btn" onclick="showAnnouncement()">📢 Надіслати всім</button>
+                <button class="action-btn" onclick="syncOdoo()">🔄 Синхронізація Odoo</button>
             </div>
         </div>
     </div>
 
-    <!-- Модальне вікно: Статистика -->
-    <div class="modal" id="statsModal">
-        <div class="modal-content" style="max-width: 600px;">
-            <div class="modal-header">
-                <div class="modal-title">📊 Детальна статистика</div>
-                <button class="modal-close" onclick="closeModal('statsModal')">×</button>
-            </div>
-            <div id="statsModalContent">
-                <!-- Контент завантажується сюди -->
-            </div>
-        </div>
-    </div>
-
-    <!-- Модальне вікно: Перейменувати -->
+    <!-- Модальні вікна -->
     <div class="modal" id="renameModal">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title">✏️ Перейменувати користувача</div>
+                <div class="modal-title">✏️ Перейменувати</div>
                 <button class="modal-close" onclick="closeModal('renameModal')">×</button>
             </div>
             <form onsubmit="submitRename(event)">
                 <div class="form-group">
                     <label class="form-label">User ID</label>
-                    <input type="number" class="form-input" id="renameUserId" placeholder="Введіть User ID" required>
+                    <input type="number" class="form-input" id="renameUserId" required>
                 </div>
                 <div class="form-group">
                     <label class="form-label">Нове ім'я</label>
-                    <input type="text" class="form-input" id="renameUserName" placeholder="Введіть нове ім'я" required>
+                    <input type="text" class="form-input" id="renameUserName" required>
                 </div>
                 <button type="submit" class="btn btn-primary">✏️ Перейменувати</button>
-                <button type="button" class="btn btn-secondary" onclick="closeModal('renameModal')">Скасувати</button>
             </form>
         </div>
     </div>
 
-    <!-- Модальне вікно: Блокувати -->
     <div class="modal" id="blockModal">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title">🚫 Блокувати користувача</div>
+                <div class="modal-title">🚫 Блокувати</div>
                 <button class="modal-close" onclick="closeModal('blockModal')">×</button>
             </div>
             <form onsubmit="submitBlock(event)">
                 <div class="form-group">
                     <label class="form-label">User ID</label>
-                    <input type="number" class="form-input" id="blockUserId" placeholder="Введіть User ID" required>
+                    <input type="number" class="form-input" id="blockUserId" required>
                 </div>
                 <button type="submit" class="btn btn-danger">🚫 Заблокувати</button>
-                <button type="button" class="btn btn-secondary" onclick="closeModal('blockModal')">Скасувати</button>
             </form>
         </div>
     </div>
 
-    <!-- Модальне вікно: Сповіщення -->
     <div class="modal" id="announcementModal">
         <div class="modal-content">
             <div class="modal-header">
-                <div class="modal-title">📢 Надіслати сповіщення</div>
+                <div class="modal-title">📢 Сповіщення</div>
                 <button class="modal-close" onclick="closeModal('announcementModal')">×</button>
             </div>
             <form onsubmit="submitAnnouncement(event)">
                 <div class="form-group">
-                    <label class="form-label">Текст повідомлення</label>
-                    <textarea class="form-input form-textarea" id="announcementText"
-                        placeholder="Введіть текст сповіщення для всіх користувачів..." required></textarea>
+                    <label class="form-label">Текст</label>
+                    <textarea class="form-input form-textarea" id="announcementText" required></textarea>
                 </div>
                 <button type="submit" class="btn btn-primary">📢 Надіслати всім</button>
-                <button type="button" class="btn btn-secondary"
-                    onclick="closeModal('announcementModal')">Скасувати</button>
             </form>
         </div>
     </div>
 
-    <!-- Модальне вікно: Інформація -->
     <div class="modal" id="infoModal">
         <div class="modal-content">
             <div class="modal-header">
@@ -699,185 +496,58 @@
                 <button class="modal-close" onclick="closeModal('infoModal')">×</button>
             </div>
             <div style="padding: 20px 0; text-align: center;">
-                <div id="infoModalIcon" style="font-size: 48px; margin-bottom: 15px;">📬</div>
-                <div id="infoModalMessage" style="color: #666; line-height: 1.6;"></div>
+                <div style="font-size: 48px; margin-bottom: 15px;">📬</div>
+                <div id="infoModalMessage"></div>
             </div>
         </div>
     </div>
 
-    <!-- Toast сповіщення -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <div>Завантаження...</div>
+    </div>
+
     <div class="toast" id="toast"></div>
 
     <script>
-        // Ініціалізація Telegram Web App
         let tg = window.Telegram.WebApp;
         tg.expand();
-        tg.setHeaderColor('#667eea');
-        tg.setBackgroundColor('#667eea');
 
-        // Глобальні параметри з URL
-        const urlParams = new URLSearchParams(window.location.search);
-        const API_URL = urlParams.get('api_url') || 'http://128.140.40.178:8080';
-        const API_TOKEN = urlParams.get('token');
-
-        // Ініціалізація
         async function init() {
-            try {
-                // Оновлюємо статистику з URL
-                document.getElementById('totalUsers').textContent = urlParams.get('total') || '0';
-                document.getElementById('activeUsers').textContent = urlParams.get('active') || '0';
-                document.getElementById('totalReports').textContent = urlParams.get('reports') || '0';
-                const pendingCount = urlParams.get('pending') || '0';
-                document.getElementById('pendingUsers').textContent = pendingCount;
+            const urlParams = new URLSearchParams(window.location.search);
+            document.getElementById('totalUsers').textContent = urlParams.get('total') || '0';
+            document.getElementById('activeUsers').textContent = urlParams.get('active') || '0';
+            document.getElementById('totalReports').textContent = urlParams.get('reports') || '0';
+            const pending = urlParams.get('pending') || '0';
+            document.getElementById('pendingUsers').textContent = pending;
 
-                // Оновлюємо бейдж
+            if (parseInt(pending) > 0) {
                 const badge = document.getElementById('pendingBadge');
-                if (parseInt(pendingCount) > 0) {
-                    badge.textContent = pendingCount;
-                    badge.style.display = 'inline-block';
-                } else {
-                    badge.style.display = 'none';
-                }
-
-                hideLoading();
-            } catch (e) {
-                console.error('Init error:', e);
+                badge.textContent = pending;
+                badge.style.display = 'inline-block';
             }
         }
 
-        // Загальна функція для запитів до API
-        async function fetchAPI(endpoint) {
-            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('light');
-            showLoading();
-            try {
-                const response = await fetch(`${API_URL}${endpoint}?token=${API_TOKEN}`);
-                if (!response.ok) throw new Error(`API Error: ${response.status}`);
-                return await response.json();
-            } catch (e) {
-                console.error('Fetch error:', e);
-                showToast('Помилка завантаження даних', 'error');
-                return null;
-            } finally {
-                hideLoading();
-            }
+        function requestData(action, params = {}) {
+            tg.sendData(JSON.stringify({ action, params, timestamp: Date.now() }));
         }
 
-        // Показати очікуючих користувачів
-        async function showPendingUsers() {
-            const data = await fetchAPI('/api/pending');
-            if (!data) return;
-
-            const content = document.getElementById('listModalContent');
-            document.getElementById('listModalTitle').textContent = '⏳ Очікуючі користувачі';
-
-            if (data.length === 0) {
-                content.innerHTML = '<div class="empty-state"><div class="empty-state-icon">✅</div><div>Немає очікуючих користувачів</div></div>';
-            } else {
-                content.innerHTML = data.map(user => `
-                    <div class="list-item">
-                        <div class="list-item-info">
-                            <div class="list-item-name">${user.username || 'Без імені'}</div>
-                            <div class="list-item-detail">ID: ${user.user_id} | ${user.requested_at || ''}</div>
-                        </div>
-                        <div class="list-item-actions">
-                            <button class="icon-btn" onclick="sendBotAction('approve_user', {user_id: ${user.user_id}})" title="Підтвердити">✅</button>
-                            <button class="icon-btn" onclick="sendBotAction('reject_user', {user_id: ${user.user_id}})" title="Відхилити">❌</button>
-                        </div>
-                    </div>
-                `).join('');
-            }
-            openModal('listModal');
+        function showInfoAndSend(title, message, action, params = {}) {
+            openModal('infoModal');
+            document.getElementById('infoModalTitle').textContent = title;
+            document.getElementById('infoModalMessage').textContent = message;
+            setTimeout(() => {
+                requestData(action, params);
+                setTimeout(() => closeModal('infoModal'), 2000);
+            }, 500);
         }
 
-        // Показати всіх користувачів
-        async function showAllUsers() {
-            const data = await fetchAPI('/api/users');
-            if (!data) return;
+        function showPendingUsers() { showInfoAndSend('⏳ Очікуючі', 'Список буде відправлено в чат.', 'get_pending_users'); }
+        function showAllUsers() { showInfoAndSend('👥 Всі користувачі', 'Список буде відправлено в чат.', 'get_all_users'); }
+        function showStats() { showInfoAndSend('📊 Статистика', 'Статистика буде відправлена в чат.', 'get_stats'); }
+        function showReports() { showInfoAndSend('📋 Звіти', 'Останні звіти будуть відправлені в чат.', 'get_reports'); }
 
-            const content = document.getElementById('listModalContent');
-            document.getElementById('listModalTitle').textContent = '👥 Всі користувачі';
-
-            content.innerHTML = data.map(user => `
-                <div class="list-item">
-                    <div class="list-item-info">
-                        <div class="list-item-name">${user.username || 'Без імені'} ${user.active ? '✅' : '🚫'}</div>
-                        <div class="list-item-detail">ID: ${user.user_id} | Реєстрація: ${user.registered_at || 'невідомо'}</div>
-                    </div>
-                    <div class="list-item-actions">
-                        <button class="icon-btn" onclick="openRenameFor(${user.user_id}, '${user.username}')">✏️</button>
-                    </div>
-                </div>
-            `).join('');
-            openModal('listModal');
-        }
-
-        // Показати статистику
-        async function showStats() {
-            const data = await fetchAPI('/api/stats');
-            if (!data) return;
-
-            const content = document.getElementById('statsModalContent');
-            content.innerHTML = `
-                <table style="width: 100%; border-collapse: collapse; margin-top: 10px;">
-                    <thead>
-                        <tr style="text-align: left; border-bottom: 2px solid #eee;">
-                            <th style="padding: 10px;">Користувач</th>
-                            <th style="padding: 10px; text-align: center;">Звітів</th>
-                            <th style="padding: 10px; text-align: center;">Годин</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        ${data.map(stat => `
-                            <tr style="border-bottom: 1px solid #f5f5f5;">
-                                <td style="padding: 10px;">${stat.name}</td>
-                                <td style="padding: 10px; text-align: center;">${stat.count}</td>
-                                <td style="padding: 10px; text-align: center;">${stat.hours.toFixed(1)}</td>
-                            </tr>
-                        `).join('')}
-                    </tbody>
-                </table>
-            `;
-            openModal('statsModal');
-        }
-
-        // Показати звіти
-        async function showReports() {
-            const data = await fetchAPI('/api/reports');
-            if (!data) return;
-
-            const content = document.getElementById('listModalContent');
-            document.getElementById('listModalTitle').textContent = '📋 Останні звіти';
-
-            content.innerHTML = data.map(report => `
-                <div class="list-item">
-                    <div class="list-item-info">
-                        <div class="list-item-name">${report.username} - ${report.data.date}</div>
-                        <div class="list-item-detail">${report.data.tasks ? report.data.tasks.length : 0} завдань | ${report.data.hours || 0} год</div>
-                    </div>
-                </div>
-            `).join('');
-            openModal('listModal');
-        }
-
-        // Допоміжна функція для дій через Telegram sendData (для сумісності з існуючим кодом бота)
-        function sendBotAction(action, params = {}) {
-            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
-            tg.sendData(JSON.stringify({
-                action: action,
-                params: params,
-                timestamp: Date.now()
-            }));
-            showToast('Запит надіслано');
-            setTimeout(() => tg.close(), 1000); // Закриваємо WebApp, бо sendData припиняє його роботу
-        }
-
-        // Функції для форм
         function showRenameUser() { openModal('renameModal'); }
-        function openRenameFor(id, name) {
-            document.getElementById('renameUserId').value = id;
-            document.getElementById('renameUserName').value = name;
-            openModal('renameModal');
-        }
         function showBlockUser() { openModal('blockModal'); }
         function showAnnouncement() { openModal('announcementModal'); }
 
@@ -885,69 +555,34 @@
             e.preventDefault();
             const userId = document.getElementById('renameUserId').value;
             const newName = document.getElementById('renameUserName').value;
-            sendBotAction('rename_user', { user_id: userId, new_name: newName });
+            closeModal('renameModal');
+            showInfoAndSend('✏️ Перейменування', `Користувача ${userId} буде перейменовано.`, 'rename_user', { user_id: userId, new_name: newName });
         }
 
         function submitBlock(e) {
             e.preventDefault();
             const userId = document.getElementById('blockUserId').value;
-            sendBotAction('block_user', { user_id: userId });
+            closeModal('blockModal');
+            showInfoAndSend('🚫 Блокування', `Користувача ${userId} буде заблоковано.`, 'block_user', { user_id: userId });
         }
 
         function submitAnnouncement(e) {
             e.preventDefault();
             const text = document.getElementById('announcementText').value;
-            sendBotAction('send_announcement', { text: text });
+            closeModal('announcementModal');
+            showInfoAndSend('📢 Розсилка', `Сповіщення буде надіслано всім.`, 'send_announcement', { text });
         }
 
-        function exportReports() {
-            sendBotAction('export_reports');
-        }
-
-        function syncOdoo() {
-            sendBotAction('sync_odoo');
-        }
-
+        function exportReports() { showInfoAndSend('📤 Експорт', 'Файл Excel буде відправлено в чат.', 'export_reports'); }
+        function syncOdoo() { showInfoAndSend('🔄 Odoo', 'Синхронізація запущена.', 'sync_odoo'); }
         function confirmClearReports() {
-            if (confirm('Ви впевнені, що хочете видалити всі звіти?')) {
-                sendBotAction('clear_reports');
+            if (confirm('Видалити всі звіти?')) {
+                showInfoAndSend('🗑️ Очищення', 'Всі звіти будуть видалені.', 'clear_reports');
             }
         }
 
-        // Модальні вікна
-        function openModal(id) {
-            document.getElementById(id).classList.add('active');
-        }
-
-        function closeModal(id) {
-            document.getElementById(id).classList.remove('active');
-        }
-
-        // Завантаження
-        function showLoading() {
-            document.getElementById('loading').classList.add('active');
-        }
-
-        function hideLoading() {
-            document.getElementById('loading').classList.remove('active');
-        }
-
-        // Toast
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.className = `toast toast-${type} active`;
-            setTimeout(() => toast.classList.remove('active'), 3000);
-        }
-
-        // Закриття модалок при кліку поза ними
-        document.addEventListener('DOMContentLoaded', function () {
-            document.querySelectorAll('.modal').forEach(modal => {
-                modal.addEventListener('click', (e) => {
-                    if (e.target === modal) modal.classList.remove('active');
-                });
-            });
-        });
+        function openModal(id) { document.getElementById(id).classList.add('active'); if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium'); }
+        function closeModal(id) { document.getElementById(id).classList.remove('active'); }
 
         tg.ready();
         init();

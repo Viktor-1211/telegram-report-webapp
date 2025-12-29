@@ -1,0 +1,439 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Адмін-панель 🔐</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: #333;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        .header {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: #667eea;
+            margin-bottom: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .header-icon {
+            font-size: 32px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-top: 20px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+        }
+
+        .stat-value {
+            font-size: 32px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 14px;
+            opacity: 0.9;
+        }
+
+        .section-title {
+            color: white;
+            font-size: 20px;
+            font-weight: bold;
+            margin: 25px 0 15px 5px;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        .actions-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .action-card {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+            text-decoration: none;
+            color: inherit;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .action-card:hover::before {
+            opacity: 1;
+        }
+
+        .action-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        }
+
+        .action-card:active {
+            transform: translateY(-2px);
+        }
+
+        .action-icon {
+            font-size: 40px;
+            z-index: 1;
+        }
+
+        .action-title {
+            font-size: 15px;
+            font-weight: 600;
+            color: #333;
+            z-index: 1;
+        }
+
+        .badge {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background: #ff3b30;
+            color: white;
+            border-radius: 12px;
+            padding: 3px 8px;
+            font-size: 12px;
+            font-weight: bold;
+            z-index: 2;
+        }
+
+        /* Кольорові акценти для різних категорій */
+        .action-card[data-category="users"] .action-icon { color: #667eea; }
+        .action-card[data-category="reports"] .action-icon { color: #f093fb; }
+        .action-card[data-category="management"] .action-icon { color: #4facfe; }
+        .action-card[data-category="danger"] .action-icon { color: #ff3b30; }
+        .action-card[data-category="communication"] .action-icon { color: #00d2ff; }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: white;
+            font-size: 18px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-radius: 50%;
+            border-top: 4px solid white;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 30px;
+            padding: 20px;
+            font-size: 14px;
+            opacity: 0.8;
+        }
+
+        /* Адаптивність */
+        @media (max-width: 600px) {
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .actions-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .stat-value {
+                font-size: 24px;
+            }
+
+            .action-icon {
+                font-size: 32px;
+            }
+
+            .action-title {
+                font-size: 13px;
+            }
+        }
+
+        /* Анімація появи */
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .action-card {
+            animation: fadeInUp 0.5s ease forwards;
+            opacity: 0;
+        }
+
+        .action-card:nth-child(1) { animation-delay: 0.1s; }
+        .action-card:nth-child(2) { animation-delay: 0.15s; }
+        .action-card:nth-child(3) { animation-delay: 0.2s; }
+        .action-card:nth-child(4) { animation-delay: 0.25s; }
+        .action-card:nth-child(5) { animation-delay: 0.3s; }
+        .action-card:nth-child(6) { animation-delay: 0.35s; }
+        .action-card:nth-child(7) { animation-delay: 0.4s; }
+        .action-card:nth-child(8) { animation-delay: 0.45s; }
+        .action-card:nth-child(9) { animation-delay: 0.5s; }
+        .action-card:nth-child(10) { animation-delay: 0.55s; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Заголовок з статистикою -->
+        <div class="header">
+            <h1>
+                <span class="header-icon">🔐</span>
+                Адмін-панель
+            </h1>
+            
+            <div class="stats-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="totalUsers">0</div>
+                    <div class="stat-label">👥 Користувачів</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="activeUsers">0</div>
+                    <div class="stat-label">✅ Активних</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="totalReports">0</div>
+                    <div class="stat-label">📝 Звітів</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="pendingUsers">0</div>
+                    <div class="stat-label">⏳ Очікують</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Управління користувачами -->
+        <div class="section-title">👥 Управління користувачами</div>
+        <div class="actions-grid">
+            <div class="action-card" data-category="users" data-action="pending">
+                <span class="badge" id="pendingBadge" style="display: none;">0</span>
+                <div class="action-icon">⏳</div>
+                <div class="action-title">Очікуючі користувачі</div>
+            </div>
+
+            <div class="action-card" data-category="users" data-action="users_list">
+                <div class="action-icon">👥</div>
+                <div class="action-title">Список користувачів</div>
+            </div>
+
+            <div class="action-card" data-category="management" data-action="rename_user">
+                <div class="action-icon">✏️</div>
+                <div class="action-title">Перейменувати</div>
+            </div>
+
+            <div class="action-card" data-category="management" data-action="block_user">
+                <div class="action-icon">🚫</div>
+                <div class="action-title">Блокувати</div>
+            </div>
+
+            <div class="action-card" data-category="management" data-action="unblock_user">
+                <div class="action-icon">✅</div>
+                <div class="action-title">Розблокувати</div>
+            </div>
+
+            <div class="action-card" data-category="danger" data-action="delete_user">
+                <div class="action-icon">❌</div>
+                <div class="action-title">Видалити користувача</div>
+            </div>
+        </div>
+
+        <!-- Управління звітами -->
+        <div class="section-title">📊 Управління звітами</div>
+        <div class="actions-grid">
+            <div class="action-card" data-category="reports" data-action="stats">
+                <div class="action-icon">📊</div>
+                <div class="action-title">Статистика всіх</div>
+            </div>
+
+            <div class="action-card" data-category="reports" data-action="edit_reports">
+                <div class="action-icon">✏️</div>
+                <div class="action-title">Редагувати звіти</div>
+            </div>
+
+            <div class="action-card" data-category="reports" data-action="export">
+                <div class="action-icon">📤</div>
+                <div class="action-title">Експорт звітів</div>
+            </div>
+
+            <div class="action-card" data-category="danger" data-action="clear_reports">
+                <div class="action-icon">🗑️</div>
+                <div class="action-title">Очистити всі звіти</div>
+            </div>
+        </div>
+
+        <!-- Комунікація -->
+        <div class="section-title">📢 Комунікація</div>
+        <div class="actions-grid">
+            <div class="action-card" data-category="communication" data-action="announcement">
+                <div class="action-icon">📢</div>
+                <div class="action-title">Надіслати сповіщення</div>
+            </div>
+
+            <div class="action-card" data-category="communication" data-action="settings">
+                <div class="action-icon">⚙️</div>
+                <div class="action-title">Налаштування</div>
+            </div>
+        </div>
+
+        <!-- Завантаження -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div>Завантаження...</div>
+        </div>
+
+        <!-- Футер -->
+        <div class="footer">
+            🤖 Report Bot Admin Panel<br>
+            Version 2.0
+        </div>
+    </div>
+
+    <script>
+        // Ініціалізація Telegram Web App
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+
+        // Встановлюємо колір фону
+        tg.setHeaderColor('#667eea');
+        tg.setBackgroundColor('#667eea');
+
+        // Завантаження статистики (передається з боту)
+        function loadStats() {
+            // Отримуємо дані з initData або встановлюємо тестові значення
+            const initData = tg.initDataUnsafe;
+            
+            if (initData && initData.start_param) {
+                try {
+                    const data = JSON.parse(decodeURIComponent(initData.start_param));
+                    document.getElementById('totalUsers').textContent = data.totalUsers || 0;
+                    document.getElementById('activeUsers').textContent = data.activeUsers || 0;
+                    document.getElementById('totalReports').textContent = data.totalReports || 0;
+                    document.getElementById('pendingUsers').textContent = data.pendingUsers || 0;
+                    
+                    if (data.pendingUsers > 0) {
+                        const badge = document.getElementById('pendingBadge');
+                        badge.textContent = data.pendingUsers;
+                        badge.style.display = 'block';
+                    }
+                } catch (e) {
+                    console.error('Error parsing stats:', e);
+                }
+            }
+        }
+
+        // Обробка кліків на картки
+        document.querySelectorAll('.action-card').forEach(card => {
+            card.addEventListener('click', function() {
+                const action = this.getAttribute('data-action');
+                
+                // Показуємо індикатор завантаження
+                document.getElementById('loading').classList.add('active');
+                
+                // Вібрація
+                if (tg.HapticFeedback) {
+                    tg.HapticFeedback.impactOccurred('medium');
+                }
+
+                // Відправляємо дію до боту
+                setTimeout(() => {
+                    tg.sendData(JSON.stringify({
+                        action: action,
+                        timestamp: Date.now()
+                    }));
+                }, 300);
+            });
+        });
+
+        // Завантажуємо статистику при запуску
+        loadStats();
+
+        // Готовність Web App
+        tg.ready();
+    </script>
+</body>
+</html>
+

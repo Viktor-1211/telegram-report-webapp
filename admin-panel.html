@@ -591,27 +591,6 @@
         </div>
     </div>
 
-    <!-- Модальне вікно: Очікуючі користувачі -->
-    <div class="modal" id="pendingUsersModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">⏳ Очікуючі користувачі</div>
-                <button class="modal-close" onclick="closeModal('pendingUsersModal')">×</button>
-            </div>
-            <div id="pendingUsersList"></div>
-        </div>
-    </div>
-
-    <!-- Модальне вікно: Всі користувачі -->
-    <div class="modal" id="allUsersModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">👥 Всі користувачі</div>
-                <button class="modal-close" onclick="closeModal('allUsersModal')">×</button>
-            </div>
-            <div id="allUsersList"></div>
-        </div>
-    </div>
 
     <!-- Модальне вікно: Перейменувати -->
     <div class="modal" id="renameModal">
@@ -671,28 +650,6 @@
         </div>
     </div>
 
-    <!-- Модальне вікно: Статистика -->
-    <div class="modal" id="statsModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">📊 Статистика користувачів</div>
-                <button class="modal-close" onclick="closeModal('statsModal')">×</button>
-            </div>
-            <div id="statsContent"></div>
-        </div>
-    </div>
-
-    <!-- Модальне вікно: Звіти -->
-    <div class="modal" id="reportsModal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <div class="modal-title">📋 Останні звіти</div>
-                <button class="modal-close" onclick="closeModal('reportsModal')">×</button>
-            </div>
-            <div id="reportsContent"></div>
-        </div>
-    </div>
-
     <!-- Toast сповіщення -->
     <div class="toast" id="toast"></div>
 
@@ -714,15 +671,29 @@
         // Ініціалізація
         async function init() {
             try {
-                // Запит даних від бота
-                requestData('get_admin_data');
+                // Читаємо дані з URL параметрів
+                const urlParams = new URLSearchParams(window.location.search);
+                const totalUsers = urlParams.get('total') || '0';
+                const activeUsers = urlParams.get('active') || '0';
+                const totalReports = urlParams.get('reports') || '0';
+                const pendingUsers = urlParams.get('pending') || '0';
                 
-                // Встановлюємо тестові дані для превью
-                setTimeout(() => {
-                    if (!Object.keys(adminData.users).length) {
-                        loadTestData();
-                    }
-                }, 1000);
+                // Оновлюємо статистику
+                document.getElementById('totalUsers').textContent = totalUsers;
+                document.getElementById('activeUsers').textContent = activeUsers;
+                document.getElementById('totalReports').textContent = totalReports;
+                document.getElementById('pendingUsers').textContent = pendingUsers;
+                
+                // Оновлюємо бейдж
+                const badge = document.getElementById('pendingBadge');
+                if (parseInt(pendingUsers) > 0) {
+                    badge.textContent = pendingUsers;
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                }
+                
+                hideLoading();
             } catch (e) {
                 console.error('Init error:', e);
                 loadTestData();
@@ -735,11 +706,15 @@
             document.getElementById('activeUsers').textContent = '0';
             document.getElementById('totalReports').textContent = '0';
             document.getElementById('pendingUsers').textContent = '0';
+            hideLoading();
         }
 
-        // Запит даних від бота
+        // Запит даних від бота (відправка команди)
         function requestData(action, params = {}) {
-            showLoading();
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('medium');
+            }
+            
             tg.sendData(JSON.stringify({
                 action: action,
                 params: params,
@@ -747,117 +722,24 @@
             }));
         }
 
-        // Обробка даних від бота (через CloudStorage або initData)
-        function updateData(data) {
-            if (data.users) adminData.users = data.users;
-            if (data.pending) adminData.pending = data.pending;
-            if (data.reports) adminData.reports = data.reports;
-            if (data.stats) adminData.stats = data.stats;
-
-            updateStatistics();
-            hideLoading();
-        }
-
-        // Оновлення статистики
-        function updateStatistics() {
-            const totalUsers = Object.keys(adminData.users).length;
-            const activeUsers = Object.values(adminData.users).filter(u => u.active).length;
-            const totalReports = adminData.reports.length;
-            const pendingCount = adminData.pending.length;
-
-            document.getElementById('totalUsers').textContent = totalUsers;
-            document.getElementById('activeUsers').textContent = activeUsers;
-            document.getElementById('totalReports').textContent = totalReports;
-            document.getElementById('pendingUsers').textContent = pendingCount;
-
-            const badge = document.getElementById('pendingBadge');
-            if (pendingCount > 0) {
-                badge.textContent = pendingCount;
-                badge.style.display = 'inline-block';
-            } else {
-                badge.style.display = 'none';
-            }
-        }
-
         // Показати очікуючих користувачів
         function showPendingUsers() {
             requestData('get_pending_users');
-            openModal('pendingUsersModal');
-            
-            const list = document.getElementById('pendingUsersList');
-            if (adminData.pending.length === 0) {
-                list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">✅</div><div>Немає очікуючих користувачів</div></div>';
-                return;
-            }
-
-            list.innerHTML = adminData.pending.map(user => `
-                <div class="list-item">
-                    <div class="list-item-info">
-                        <div class="list-item-name">${user.username || 'Без імені'}</div>
-                        <div class="list-item-detail">ID: ${user.user_id}</div>
-                    </div>
-                    <div class="list-item-actions">
-                        <button class="icon-btn" onclick="approveUser(${user.user_id})" title="Підтвердити">✅</button>
-                        <button class="icon-btn" onclick="rejectUser(${user.user_id})" title="Відхилити">❌</button>
-                    </div>
-                </div>
-            `).join('');
         }
 
         // Показати всіх користувачів
         function showAllUsers() {
             requestData('get_all_users');
-            openModal('allUsersModal');
-            
-            const list = document.getElementById('allUsersList');
-            const users = Object.values(adminData.users);
-            
-            if (users.length === 0) {
-                list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">👥</div><div>Немає користувачів</div></div>';
-                return;
-            }
-
-            list.innerHTML = users.map(user => `
-                <div class="list-item">
-                    <div class="list-item-info">
-                        <div class="list-item-name">
-                            ${user.username || 'Без імені'}
-                            ${user.active ? '<span class="badge badge-success">Активний</span>' : '<span class="badge badge-danger">Заблокований</span>'}
-                        </div>
-                        <div class="list-item-detail">ID: ${user.user_id}</div>
-                    </div>
-                </div>
-            `).join('');
         }
 
         // Показати статистику
         function showStats() {
             requestData('get_stats');
-            openModal('statsModal');
-            
-            const content = document.getElementById('statsContent');
-            content.innerHTML = '<div class="loading active"><div class="spinner"></div></div>';
         }
 
         // Показати звіти
         function showReports() {
             requestData('get_reports');
-            openModal('reportsModal');
-            
-            const content = document.getElementById('reportsContent');
-            if (adminData.reports.length === 0) {
-                content.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><div>Немає звітів</div></div>';
-                return;
-            }
-
-            content.innerHTML = adminData.reports.slice(0, 20).map(report => `
-                <div class="list-item">
-                    <div class="list-item-info">
-                        <div class="list-item-name">${report.username || 'Без імені'}</div>
-                        <div class="list-item-detail">📅 ${report.data.date} | ⏱ ${report.data.hours || 0} год</div>
-                    </div>
-                </div>
-            `).join('');
         }
 
         // Форми
@@ -870,53 +752,32 @@
             const userId = document.getElementById('renameUserId').value;
             const newName = document.getElementById('renameUserName').value;
             requestData('rename_user', { user_id: userId, new_name: newName });
-            closeModal('renameModal');
-            showToast('Користувача перейменовано!', 'success');
         }
 
         function submitBlock(e) {
             e.preventDefault();
             const userId = document.getElementById('blockUserId').value;
             requestData('block_user', { user_id: userId });
-            closeModal('blockModal');
-            showToast('Користувача заблоковано!', 'success');
         }
 
         function submitAnnouncement(e) {
             e.preventDefault();
             const text = document.getElementById('announcementText').value;
             requestData('send_announcement', { text: text });
-            closeModal('announcementModal');
-            showToast('Сповіщення надіслано!', 'success');
-        }
-
-        function approveUser(userId) {
-            requestData('approve_user', { user_id: userId });
-            showToast('Користувача підтверджено!', 'success');
-            setTimeout(() => showPendingUsers(), 500);
-        }
-
-        function rejectUser(userId) {
-            requestData('reject_user', { user_id: userId });
-            showToast('Заявку відхилено!', 'success');
-            setTimeout(() => showPendingUsers(), 500);
         }
 
         function exportReports() {
             requestData('export_reports');
-            showToast('Експорт почато...', 'success');
         }
 
         function confirmClearReports() {
             if (confirm('Ви впевнені, що хочете видалити всі звіти? Цю дію не можна скасувати!')) {
                 requestData('clear_reports');
-                showToast('Звіти очищено!', 'success');
             }
         }
 
         function syncOdoo() {
             requestData('sync_odoo');
-            showToast('Синхронізація з Odoo запущена!', 'success');
         }
 
         // Модальні вікна
@@ -945,15 +806,6 @@
             toast.className = `toast toast-${type} active`;
             setTimeout(() => toast.classList.remove('active'), 3000);
         }
-
-        // Закриття модалок при кліку поза ними
-        document.querySelectorAll('.modal').forEach(modal => {
-            modal.addEventListener('click', (e) => {
-                if (e.target === modal) {
-                    modal.classList.remove('active');
-                }
-            });
-        });
 
         // Готовність
         tg.ready();

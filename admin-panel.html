@@ -16,161 +16,349 @@
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             min-height: 100vh;
-            padding: 20px;
             color: #333;
+            overflow-x: hidden;
         }
 
         .container {
             max-width: 800px;
             margin: 0 auto;
+            padding: 20px;
+            padding-bottom: 80px;
         }
 
+        /* Заголовок */
         .header {
             background: white;
             border-radius: 20px;
-            padding: 25px;
+            padding: 20px;
             margin-bottom: 20px;
             box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
             text-align: center;
         }
 
         .header h1 {
-            font-size: 28px;
+            font-size: 24px;
             color: #667eea;
-            margin-bottom: 10px;
+            margin-bottom: 5px;
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 10px;
         }
 
-        .header-icon {
-            font-size: 32px;
+        .header-subtitle {
+            font-size: 14px;
+            color: #888;
         }
 
+        /* Статистика */
         .stats-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-top: 20px;
+            gap: 12px;
+            margin-top: 15px;
         }
 
         .stat-card {
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
-            padding: 15px;
-            border-radius: 15px;
+            padding: 12px;
+            border-radius: 12px;
             text-align: center;
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
         }
 
         .stat-value {
-            font-size: 32px;
+            font-size: 28px;
             font-weight: bold;
-            margin-bottom: 5px;
+            margin-bottom: 3px;
         }
 
         .stat-label {
-            font-size: 14px;
+            font-size: 13px;
             opacity: 0.9;
         }
 
-        .section-title {
-            color: white;
-            font-size: 20px;
-            font-weight: bold;
-            margin: 25px 0 15px 5px;
-            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        /* Секції */
+        .section {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
         }
 
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #667eea;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Кнопки дій */
         .actions-grid {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
+            gap: 10px;
         }
 
-        .action-card {
-            background: white;
-            border-radius: 15px;
-            padding: 20px;
+        .action-btn {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border: 2px solid rgba(102, 126, 234, 0.3);
+            border-radius: 12px;
+            padding: 15px 10px;
             text-align: center;
             cursor: pointer;
             transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            text-decoration: none;
-            color: inherit;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            gap: 10px;
-            position: relative;
-            overflow: hidden;
+            font-size: 14px;
+            font-weight: 600;
+            color: #667eea;
         }
 
-        .action-card::before {
-            content: '';
-            position: absolute;
+        .action-btn:hover {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.2) 0%, rgba(118, 75, 162, 0.2) 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.3);
+        }
+
+        .action-btn:active {
+            transform: translateY(0);
+        }
+
+        .action-btn.danger {
+            color: #ff3b30;
+            border-color: rgba(255, 59, 48, 0.3);
+            background: rgba(255, 59, 48, 0.05);
+        }
+
+        .action-btn.danger:hover {
+            background: rgba(255, 59, 48, 0.1);
+        }
+
+        /* Списки */
+        .list-item {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .list-item-info {
+            flex: 1;
+        }
+
+        .list-item-name {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+        }
+
+        .list-item-detail {
+            font-size: 13px;
+            color: #888;
+        }
+
+        .list-item-actions {
+            display: flex;
+            gap: 8px;
+        }
+
+        .icon-btn {
+            background: white;
+            border: none;
+            border-radius: 8px;
+            padding: 8px 12px;
+            cursor: pointer;
+            font-size: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+            transition: all 0.2s ease;
+        }
+
+        .icon-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .icon-btn:active {
+            transform: scale(0.95);
+        }
+
+        /* Форми */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #667eea;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        .form-textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        /* Модальні вікна */
+        .modal {
+            display: none;
+            position: fixed;
             top: 0;
             left: 0;
             width: 100%;
             height: 100%;
-            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
-            opacity: 0;
-            transition: opacity 0.3s ease;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
         }
 
-        .action-card:hover::before {
-            opacity: 1;
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
         }
 
-        .action-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
         }
 
-        .action-card:active {
-            transform: translateY(-2px);
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
         }
 
-        .action-icon {
-            font-size: 40px;
-            z-index: 1;
+        .modal-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #667eea;
         }
 
-        .action-title {
-            font-size: 15px;
+        .modal-close {
+            background: #f0f0f0;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: #e0e0e0;
+            transform: rotate(90deg);
+        }
+
+        /* Кнопки */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
             font-weight: 600;
-            color: #333;
-            z-index: 1;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
         }
 
-        .badge {
-            position: absolute;
-            top: 10px;
-            right: 10px;
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-danger {
             background: #ff3b30;
             color: white;
-            border-radius: 12px;
-            padding: 3px 8px;
-            font-size: 12px;
-            font-weight: bold;
-            z-index: 2;
         }
 
-        /* Кольорові акценти для різних категорій */
-        .action-card[data-category="users"] .action-icon { color: #667eea; }
-        .action-card[data-category="reports"] .action-icon { color: #f093fb; }
-        .action-card[data-category="management"] .action-icon { color: #4facfe; }
-        .action-card[data-category="danger"] .action-icon { color: #ff3b30; }
-        .action-card[data-category="communication"] .action-icon { color: #00d2ff; }
+        .btn-danger:hover {
+            background: #ff2d1f;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(255, 59, 48, 0.4);
+        }
 
+        /* Бейджі */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .badge-danger {
+            background: #ff3b30;
+            color: white;
+        }
+
+        .badge-success {
+            background: #34c759;
+            color: white;
+        }
+
+        .badge-warning {
+            background: #ff9500;
+            color: white;
+        }
+
+        /* Завантаження */
         .loading {
             display: none;
             text-align: center;
-            padding: 20px;
-            color: white;
-            font-size: 18px;
+            padding: 40px 20px;
         }
 
         .loading.active {
@@ -178,13 +366,13 @@
         }
 
         .spinner {
-            border: 4px solid rgba(255, 255, 255, 0.3);
+            border: 4px solid rgba(102, 126, 234, 0.2);
             border-radius: 50%;
-            border-top: 4px solid white;
-            width: 40px;
-            height: 40px;
+            border-top: 4px solid #667eea;
+            width: 50px;
+            height: 50px;
             animation: spin 1s linear infinite;
-            margin: 0 auto 10px;
+            margin: 0 auto 15px;
         }
 
         @keyframes spin {
@@ -192,47 +380,15 @@
             100% { transform: rotate(360deg); }
         }
 
-        .footer {
-            text-align: center;
-            color: white;
-            margin-top: 30px;
-            padding: 20px;
-            font-size: 14px;
-            opacity: 0.8;
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
-        /* Адаптивність */
-        @media (max-width: 600px) {
-            .stats-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .actions-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .header h1 {
-                font-size: 24px;
-            }
-
-            .stat-value {
-                font-size: 24px;
-            }
-
-            .action-icon {
-                font-size: 32px;
-            }
-
-            .action-title {
-                font-size: 13px;
-            }
-        }
-
-        /* Анімація появи */
-        @keyframes fadeInUp {
+        @keyframes slideUp {
             from {
                 opacity: 0;
-                transform: translateY(20px);
+                transform: translateY(30px);
             }
             to {
                 opacity: 1;
@@ -240,200 +396,568 @@
             }
         }
 
-        .action-card {
-            animation: fadeInUp 0.5s ease forwards;
-            opacity: 0;
+        /* Empty state */
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #888;
         }
 
-        .action-card:nth-child(1) { animation-delay: 0.1s; }
-        .action-card:nth-child(2) { animation-delay: 0.15s; }
-        .action-card:nth-child(3) { animation-delay: 0.2s; }
-        .action-card:nth-child(4) { animation-delay: 0.25s; }
-        .action-card:nth-child(5) { animation-delay: 0.3s; }
-        .action-card:nth-child(6) { animation-delay: 0.35s; }
-        .action-card:nth-child(7) { animation-delay: 0.4s; }
-        .action-card:nth-child(8) { animation-delay: 0.45s; }
-        .action-card:nth-child(9) { animation-delay: 0.5s; }
-        .action-card:nth-child(10) { animation-delay: 0.55s; }
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+
+        /* Навігація назад */
+        .back-btn {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            padding: 10px 20px;
+            margin-bottom: 15px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: all 0.3s ease;
+        }
+
+        .back-btn:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateX(-5px);
+        }
+
+        /* Сповіщення */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+            display: none;
+            animation: slideUp 0.3s ease;
+        }
+
+        .toast.active {
+            display: block;
+        }
+
+        .toast-success {
+            border-left: 4px solid #34c759;
+        }
+
+        .toast-error {
+            border-left: 4px solid #ff3b30;
+        }
+
+        /* Адаптивність */
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .stats-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+
+            .stat-value {
+                font-size: 24px;
+            }
+
+            .actions-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Анімації появи */
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .slide-up {
+            animation: slideUp 0.5s ease forwards;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <!-- Заголовок з статистикою -->
-        <div class="header">
-            <h1>
-                <span class="header-icon">🔐</span>
-                Адмін-панель
-            </h1>
-            
-            <div class="stats-grid">
-                <div class="stat-card">
-                    <div class="stat-value" id="totalUsers">0</div>
-                    <div class="stat-label">👥 Користувачів</div>
+        <!-- Головний екран -->
+        <div id="mainScreen">
+            <!-- Заголовок -->
+            <div class="header fade-in">
+                <h1>
+                    <span>🔐</span>
+                    Адмін-панель
+                </h1>
+                <div class="header-subtitle">Керування ботом звітів</div>
+                
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalUsers">-</div>
+                        <div class="stat-label">👥 Користувачів</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="activeUsers">-</div>
+                        <div class="stat-label">✅ Активних</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="totalReports">-</div>
+                        <div class="stat-label">📝 Звітів</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-value" id="pendingUsers">-</div>
+                        <div class="stat-label">⏳ Очікують</div>
+                    </div>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="activeUsers">0</div>
-                    <div class="stat-label">✅ Активних</div>
+            </div>
+
+            <!-- Управління користувачами -->
+            <div class="section slide-up">
+                <div class="section-title">
+                    <span>👥</span>
+                    Користувачі
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="totalReports">0</div>
-                    <div class="stat-label">📝 Звітів</div>
+                <div class="actions-grid">
+                    <button class="action-btn" onclick="showPendingUsers()">
+                        <div>⏳ Очікуючі</div>
+                        <span class="badge badge-danger" id="pendingBadge" style="display: none;">0</span>
+                    </button>
+                    <button class="action-btn" onclick="showAllUsers()">
+                        <div>👥 Всі користувачі</div>
+                    </button>
+                    <button class="action-btn" onclick="showRenameUser()">
+                        <div>✏️ Перейменувати</div>
+                    </button>
+                    <button class="action-btn" onclick="showBlockUser()">
+                        <div>🚫 Блокувати</div>
+                    </button>
                 </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="pendingUsers">0</div>
-                    <div class="stat-label">⏳ Очікують</div>
+            </div>
+
+            <!-- Управління звітами -->
+            <div class="section slide-up">
+                <div class="section-title">
+                    <span>📊</span>
+                    Звіти
+                </div>
+                <div class="actions-grid">
+                    <button class="action-btn" onclick="showStats()">
+                        <div>📊 Статистика</div>
+                    </button>
+                    <button class="action-btn" onclick="showReports()">
+                        <div>📋 Всі звіти</div>
+                    </button>
+                    <button class="action-btn" onclick="exportReports()">
+                        <div>📤 Експорт</div>
+                    </button>
+                    <button class="action-btn danger" onclick="confirmClearReports()">
+                        <div>🗑️ Очистити</div>
+                    </button>
                 </div>
             </div>
-        </div>
 
-        <!-- Управління користувачами -->
-        <div class="section-title">👥 Управління користувачами</div>
-        <div class="actions-grid">
-            <div class="action-card" data-category="users" data-action="pending">
-                <span class="badge" id="pendingBadge" style="display: none;">0</span>
-                <div class="action-icon">⏳</div>
-                <div class="action-title">Очікуючі користувачі</div>
-            </div>
-
-            <div class="action-card" data-category="users" data-action="users_list">
-                <div class="action-icon">👥</div>
-                <div class="action-title">Список користувачів</div>
-            </div>
-
-            <div class="action-card" data-category="management" data-action="rename_user">
-                <div class="action-icon">✏️</div>
-                <div class="action-title">Перейменувати</div>
-            </div>
-
-            <div class="action-card" data-category="management" data-action="block_user">
-                <div class="action-icon">🚫</div>
-                <div class="action-title">Блокувати</div>
-            </div>
-
-            <div class="action-card" data-category="management" data-action="unblock_user">
-                <div class="action-icon">✅</div>
-                <div class="action-title">Розблокувати</div>
-            </div>
-
-            <div class="action-card" data-category="danger" data-action="delete_user">
-                <div class="action-icon">❌</div>
-                <div class="action-title">Видалити користувача</div>
-            </div>
-        </div>
-
-        <!-- Управління звітами -->
-        <div class="section-title">📊 Управління звітами</div>
-        <div class="actions-grid">
-            <div class="action-card" data-category="reports" data-action="stats">
-                <div class="action-icon">📊</div>
-                <div class="action-title">Статистика всіх</div>
-            </div>
-
-            <div class="action-card" data-category="reports" data-action="edit_reports">
-                <div class="action-icon">✏️</div>
-                <div class="action-title">Редагувати звіти</div>
-            </div>
-
-            <div class="action-card" data-category="reports" data-action="export">
-                <div class="action-icon">📤</div>
-                <div class="action-title">Експорт звітів</div>
-            </div>
-
-            <div class="action-card" data-category="danger" data-action="clear_reports">
-                <div class="action-icon">🗑️</div>
-                <div class="action-title">Очистити всі звіти</div>
-            </div>
-        </div>
-
-        <!-- Комунікація -->
-        <div class="section-title">📢 Комунікація</div>
-        <div class="actions-grid">
-            <div class="action-card" data-category="communication" data-action="announcement">
-                <div class="action-icon">📢</div>
-                <div class="action-title">Надіслати сповіщення</div>
-            </div>
-
-            <div class="action-card" data-category="communication" data-action="settings">
-                <div class="action-icon">⚙️</div>
-                <div class="action-title">Налаштування</div>
+            <!-- Комунікація -->
+            <div class="section slide-up">
+                <div class="section-title">
+                    <span>📢</span>
+                    Комунікація
+                </div>
+                <div class="actions-grid">
+                    <button class="action-btn" onclick="showAnnouncement()">
+                        <div>📢 Надіслати всім</div>
+                    </button>
+                    <button class="action-btn" onclick="syncOdoo()">
+                        <div>🔄 Синхронізація Odoo</div>
+                    </button>
+                </div>
             </div>
         </div>
 
         <!-- Завантаження -->
         <div class="loading" id="loading">
             <div class="spinner"></div>
-            <div>Завантаження...</div>
-        </div>
-
-        <!-- Футер -->
-        <div class="footer">
-            🤖 Report Bot Admin Panel<br>
-            Version 2.0
+            <div style="color: white; font-weight: 600;">Завантаження...</div>
         </div>
     </div>
+
+    <!-- Модальне вікно: Очікуючі користувачі -->
+    <div class="modal" id="pendingUsersModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">⏳ Очікуючі користувачі</div>
+                <button class="modal-close" onclick="closeModal('pendingUsersModal')">×</button>
+            </div>
+            <div id="pendingUsersList"></div>
+        </div>
+    </div>
+
+    <!-- Модальне вікно: Всі користувачі -->
+    <div class="modal" id="allUsersModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">👥 Всі користувачі</div>
+                <button class="modal-close" onclick="closeModal('allUsersModal')">×</button>
+            </div>
+            <div id="allUsersList"></div>
+        </div>
+    </div>
+
+    <!-- Модальне вікно: Перейменувати -->
+    <div class="modal" id="renameModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">✏️ Перейменувати користувача</div>
+                <button class="modal-close" onclick="closeModal('renameModal')">×</button>
+            </div>
+            <form onsubmit="submitRename(event)">
+                <div class="form-group">
+                    <label class="form-label">User ID</label>
+                    <input type="number" class="form-input" id="renameUserId" placeholder="Введіть User ID" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Нове ім'я</label>
+                    <input type="text" class="form-input" id="renameUserName" placeholder="Введіть нове ім'я" required>
+                </div>
+                <button type="submit" class="btn btn-primary">✏️ Перейменувати</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('renameModal')">Скасувати</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальне вікно: Блокувати -->
+    <div class="modal" id="blockModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">🚫 Блокувати користувача</div>
+                <button class="modal-close" onclick="closeModal('blockModal')">×</button>
+            </div>
+            <form onsubmit="submitBlock(event)">
+                <div class="form-group">
+                    <label class="form-label">User ID</label>
+                    <input type="number" class="form-input" id="blockUserId" placeholder="Введіть User ID" required>
+                </div>
+                <button type="submit" class="btn btn-danger">🚫 Заблокувати</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('blockModal')">Скасувати</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальне вікно: Сповіщення -->
+    <div class="modal" id="announcementModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">📢 Надіслати сповіщення</div>
+                <button class="modal-close" onclick="closeModal('announcementModal')">×</button>
+            </div>
+            <form onsubmit="submitAnnouncement(event)">
+                <div class="form-group">
+                    <label class="form-label">Текст повідомлення</label>
+                    <textarea class="form-input form-textarea" id="announcementText" placeholder="Введіть текст сповіщення для всіх користувачів..." required></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary">📢 Надіслати всім</button>
+                <button type="button" class="btn btn-secondary" onclick="closeModal('announcementModal')">Скасувати</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Модальне вікно: Статистика -->
+    <div class="modal" id="statsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">📊 Статистика користувачів</div>
+                <button class="modal-close" onclick="closeModal('statsModal')">×</button>
+            </div>
+            <div id="statsContent"></div>
+        </div>
+    </div>
+
+    <!-- Модальне вікно: Звіти -->
+    <div class="modal" id="reportsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">📋 Останні звіти</div>
+                <button class="modal-close" onclick="closeModal('reportsModal')">×</button>
+            </div>
+            <div id="reportsContent"></div>
+        </div>
+    </div>
+
+    <!-- Toast сповіщення -->
+    <div class="toast" id="toast"></div>
 
     <script>
         // Ініціалізація Telegram Web App
         let tg = window.Telegram.WebApp;
         tg.expand();
-
-        // Встановлюємо колір фону
         tg.setHeaderColor('#667eea');
         tg.setBackgroundColor('#667eea');
 
-        // Завантаження статистики (передається з боту)
-        function loadStats() {
-            // Отримуємо дані з initData або встановлюємо тестові значення
-            const initData = tg.initDataUnsafe;
-            
-            if (initData && initData.start_param) {
-                try {
-                    const data = JSON.parse(decodeURIComponent(initData.start_param));
-                    document.getElementById('totalUsers').textContent = data.totalUsers || 0;
-                    document.getElementById('activeUsers').textContent = data.activeUsers || 0;
-                    document.getElementById('totalReports').textContent = data.totalReports || 0;
-                    document.getElementById('pendingUsers').textContent = data.pendingUsers || 0;
-                    
-                    if (data.pendingUsers > 0) {
-                        const badge = document.getElementById('pendingBadge');
-                        badge.textContent = data.pendingUsers;
-                        badge.style.display = 'block';
+        // Дані
+        let adminData = {
+            users: {},
+            pending: [],
+            reports: [],
+            stats: {}
+        };
+
+        // Ініціалізація
+        async function init() {
+            try {
+                // Запит даних від бота
+                requestData('get_admin_data');
+                
+                // Встановлюємо тестові дані для превью
+                setTimeout(() => {
+                    if (!Object.keys(adminData.users).length) {
+                        loadTestData();
                     }
-                } catch (e) {
-                    console.error('Error parsing stats:', e);
-                }
+                }, 1000);
+            } catch (e) {
+                console.error('Init error:', e);
+                loadTestData();
             }
         }
 
-        // Обробка кліків на картки
-        document.querySelectorAll('.action-card').forEach(card => {
-            card.addEventListener('click', function() {
-                const action = this.getAttribute('data-action');
-                
-                // Показуємо індикатор завантаження
-                document.getElementById('loading').classList.add('active');
-                
-                // Вібрація
-                if (tg.HapticFeedback) {
-                    tg.HapticFeedback.impactOccurred('medium');
-                }
+        // Завантаження тестових даних
+        function loadTestData() {
+            document.getElementById('totalUsers').textContent = '0';
+            document.getElementById('activeUsers').textContent = '0';
+            document.getElementById('totalReports').textContent = '0';
+            document.getElementById('pendingUsers').textContent = '0';
+        }
 
-                // Відправляємо дію до боту
-                setTimeout(() => {
-                    tg.sendData(JSON.stringify({
-                        action: action,
-                        timestamp: Date.now()
-                    }));
-                }, 300);
+        // Запит даних від бота
+        function requestData(action, params = {}) {
+            showLoading();
+            tg.sendData(JSON.stringify({
+                action: action,
+                params: params,
+                timestamp: Date.now()
+            }));
+        }
+
+        // Обробка даних від бота (через CloudStorage або initData)
+        function updateData(data) {
+            if (data.users) adminData.users = data.users;
+            if (data.pending) adminData.pending = data.pending;
+            if (data.reports) adminData.reports = data.reports;
+            if (data.stats) adminData.stats = data.stats;
+
+            updateStatistics();
+            hideLoading();
+        }
+
+        // Оновлення статистики
+        function updateStatistics() {
+            const totalUsers = Object.keys(adminData.users).length;
+            const activeUsers = Object.values(adminData.users).filter(u => u.active).length;
+            const totalReports = adminData.reports.length;
+            const pendingCount = adminData.pending.length;
+
+            document.getElementById('totalUsers').textContent = totalUsers;
+            document.getElementById('activeUsers').textContent = activeUsers;
+            document.getElementById('totalReports').textContent = totalReports;
+            document.getElementById('pendingUsers').textContent = pendingCount;
+
+            const badge = document.getElementById('pendingBadge');
+            if (pendingCount > 0) {
+                badge.textContent = pendingCount;
+                badge.style.display = 'inline-block';
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+
+        // Показати очікуючих користувачів
+        function showPendingUsers() {
+            requestData('get_pending_users');
+            openModal('pendingUsersModal');
+            
+            const list = document.getElementById('pendingUsersList');
+            if (adminData.pending.length === 0) {
+                list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">✅</div><div>Немає очікуючих користувачів</div></div>';
+                return;
+            }
+
+            list.innerHTML = adminData.pending.map(user => `
+                <div class="list-item">
+                    <div class="list-item-info">
+                        <div class="list-item-name">${user.username || 'Без імені'}</div>
+                        <div class="list-item-detail">ID: ${user.user_id}</div>
+                    </div>
+                    <div class="list-item-actions">
+                        <button class="icon-btn" onclick="approveUser(${user.user_id})" title="Підтвердити">✅</button>
+                        <button class="icon-btn" onclick="rejectUser(${user.user_id})" title="Відхилити">❌</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Показати всіх користувачів
+        function showAllUsers() {
+            requestData('get_all_users');
+            openModal('allUsersModal');
+            
+            const list = document.getElementById('allUsersList');
+            const users = Object.values(adminData.users);
+            
+            if (users.length === 0) {
+                list.innerHTML = '<div class="empty-state"><div class="empty-state-icon">👥</div><div>Немає користувачів</div></div>';
+                return;
+            }
+
+            list.innerHTML = users.map(user => `
+                <div class="list-item">
+                    <div class="list-item-info">
+                        <div class="list-item-name">
+                            ${user.username || 'Без імені'}
+                            ${user.active ? '<span class="badge badge-success">Активний</span>' : '<span class="badge badge-danger">Заблокований</span>'}
+                        </div>
+                        <div class="list-item-detail">ID: ${user.user_id}</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Показати статистику
+        function showStats() {
+            requestData('get_stats');
+            openModal('statsModal');
+            
+            const content = document.getElementById('statsContent');
+            content.innerHTML = '<div class="loading active"><div class="spinner"></div></div>';
+        }
+
+        // Показати звіти
+        function showReports() {
+            requestData('get_reports');
+            openModal('reportsModal');
+            
+            const content = document.getElementById('reportsContent');
+            if (adminData.reports.length === 0) {
+                content.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📋</div><div>Немає звітів</div></div>';
+                return;
+            }
+
+            content.innerHTML = adminData.reports.slice(0, 20).map(report => `
+                <div class="list-item">
+                    <div class="list-item-info">
+                        <div class="list-item-name">${report.username || 'Без імені'}</div>
+                        <div class="list-item-detail">📅 ${report.data.date} | ⏱ ${report.data.hours || 0} год</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Форми
+        function showRenameUser() { openModal('renameModal'); }
+        function showBlockUser() { openModal('blockModal'); }
+        function showAnnouncement() { openModal('announcementModal'); }
+
+        function submitRename(e) {
+            e.preventDefault();
+            const userId = document.getElementById('renameUserId').value;
+            const newName = document.getElementById('renameUserName').value;
+            requestData('rename_user', { user_id: userId, new_name: newName });
+            closeModal('renameModal');
+            showToast('Користувача перейменовано!', 'success');
+        }
+
+        function submitBlock(e) {
+            e.preventDefault();
+            const userId = document.getElementById('blockUserId').value;
+            requestData('block_user', { user_id: userId });
+            closeModal('blockModal');
+            showToast('Користувача заблоковано!', 'success');
+        }
+
+        function submitAnnouncement(e) {
+            e.preventDefault();
+            const text = document.getElementById('announcementText').value;
+            requestData('send_announcement', { text: text });
+            closeModal('announcementModal');
+            showToast('Сповіщення надіслано!', 'success');
+        }
+
+        function approveUser(userId) {
+            requestData('approve_user', { user_id: userId });
+            showToast('Користувача підтверджено!', 'success');
+            setTimeout(() => showPendingUsers(), 500);
+        }
+
+        function rejectUser(userId) {
+            requestData('reject_user', { user_id: userId });
+            showToast('Заявку відхилено!', 'success');
+            setTimeout(() => showPendingUsers(), 500);
+        }
+
+        function exportReports() {
+            requestData('export_reports');
+            showToast('Експорт почато...', 'success');
+        }
+
+        function confirmClearReports() {
+            if (confirm('Ви впевнені, що хочете видалити всі звіти? Цю дію не можна скасувати!')) {
+                requestData('clear_reports');
+                showToast('Звіти очищено!', 'success');
+            }
+        }
+
+        function syncOdoo() {
+            requestData('sync_odoo');
+            showToast('Синхронізація з Odoo запущена!', 'success');
+        }
+
+        // Модальні вікна
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // Завантаження
+        function showLoading() {
+            document.getElementById('loading').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('active');
+        }
+
+        // Toast
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast toast-${type} active`;
+            setTimeout(() => toast.classList.remove('active'), 3000);
+        }
+
+        // Закриття модалок при кліку поза ними
+        document.querySelectorAll('.modal').forEach(modal => {
+            modal.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.remove('active');
+                }
             });
         });
 
-        // Завантажуємо статистику при запуску
-        loadStats();
-
-        // Готовність Web App
+        // Готовність
         tg.ready();
+        init();
     </script>
 </body>
 </html>
-

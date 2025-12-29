@@ -1,0 +1,823 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Моя панель 👤</title>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            min-height: 100vh;
+            color: #333;
+            overflow-x: hidden;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            padding-bottom: 80px;
+        }
+
+        /* Заголовок */
+        .header {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.15);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            color: #4facfe;
+            margin-bottom: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+
+        .user-info {
+            font-size: 16px;
+            color: #666;
+            margin-bottom: 15px;
+        }
+
+        .user-name {
+            font-weight: bold;
+            color: #4facfe;
+        }
+
+        /* Швидкі дії */
+        .quick-actions {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 12px;
+            margin-top: 15px;
+        }
+
+        .quick-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+            padding: 15px;
+            border-radius: 15px;
+            text-align: center;
+            font-weight: 600;
+            font-size: 14px;
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.3);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+        }
+
+        .quick-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+        }
+
+        .quick-btn:active {
+            transform: translateY(-1px);
+        }
+
+        .quick-icon {
+            font-size: 24px;
+            display: block;
+            margin-bottom: 5px;
+        }
+
+        /* Секції */
+        .section {
+            background: white;
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 15px;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #4facfe;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Опції списку */
+        .option-list {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .option-item {
+            background: linear-gradient(135deg, rgba(79, 172, 254, 0.05) 0%, rgba(0, 242, 254, 0.05) 100%);
+            border: 2px solid rgba(79, 172, 254, 0.2);
+            border-radius: 12px;
+            padding: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .option-item:hover {
+            background: linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(0, 242, 254, 0.1) 100%);
+            transform: translateX(5px);
+            box-shadow: 0 4px 12px rgba(79, 172, 254, 0.2);
+        }
+
+        .option-item:active {
+            transform: translateX(2px);
+        }
+
+        .option-content {
+            flex: 1;
+        }
+
+        .option-title {
+            font-weight: 600;
+            color: #333;
+            margin-bottom: 4px;
+            font-size: 15px;
+        }
+
+        .option-desc {
+            font-size: 13px;
+            color: #888;
+        }
+
+        .option-icon {
+            font-size: 24px;
+            margin-left: 10px;
+        }
+
+        /* Модальні вікна */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .modal.active {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 20px;
+            padding: 25px;
+            max-width: 500px;
+            width: 100%;
+            max-height: 80vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .modal-title {
+            font-size: 20px;
+            font-weight: bold;
+            color: #4facfe;
+        }
+
+        .modal-close {
+            background: #f0f0f0;
+            border: none;
+            border-radius: 50%;
+            width: 32px;
+            height: 32px;
+            font-size: 20px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+        }
+
+        .modal-close:hover {
+            background: #e0e0e0;
+            transform: rotate(90deg);
+        }
+
+        /* Форми */
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: #4facfe;
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-input, .form-select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 14px;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus, .form-select:focus {
+            outline: none;
+            border-color: #4facfe;
+            box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
+        }
+
+        /* Кнопки */
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(79, 172, 254, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        /* Перемикач */
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 28px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked + .toggle-slider {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        input:checked + .toggle-slider:before {
+            transform: translateX(22px);
+        }
+
+        /* Завантаження */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px 20px;
+        }
+
+        .loading.active {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid rgba(79, 172, 254, 0.2);
+            border-radius: 50%;
+            border-top: 4px solid #4facfe;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Toast */
+        .toast {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: white;
+            padding: 15px 25px;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+            z-index: 2000;
+            display: none;
+            animation: slideUp 0.3s ease;
+        }
+
+        .toast.active {
+            display: block;
+        }
+
+        .toast-success {
+            border-left: 4px solid #34c759;
+        }
+
+        .toast-error {
+            border-left: 4px solid #ff3b30;
+        }
+
+        /* Адаптивність */
+        @media (max-width: 600px) {
+            .container {
+                padding: 15px;
+            }
+
+            .header h1 {
+                font-size: 24px;
+            }
+
+            .quick-actions {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Анімації */
+        .fade-in {
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .slide-up {
+            animation: slideUp 0.5s ease forwards;
+        }
+
+        /* Статистика */
+        .stats-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .stat-box {
+            background: linear-gradient(135deg, rgba(79, 172, 254, 0.1) 0%, rgba(0, 242, 254, 0.1) 100%);
+            padding: 15px;
+            border-radius: 12px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #4facfe;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            font-size: 12px;
+            color: #888;
+        }
+
+        /* Бейдж */
+        .badge {
+            display: inline-block;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-left: 8px;
+        }
+
+        .badge-active {
+            background: #34c759;
+            color: white;
+        }
+
+        .badge-inactive {
+            background: #ff3b30;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Заголовок -->
+        <div class="header fade-in">
+            <h1>
+                <span>👤</span>
+                Моя панель
+            </h1>
+            <div class="user-info">
+                Вітаємо, <span class="user-name" id="userName">Користувач</span>!
+            </div>
+
+            <!-- Швидкі дії -->
+            <div class="quick-actions">
+                <button class="quick-btn" onclick="createReport()">
+                    <span class="quick-icon">📝</span>
+                    Створити звіт
+                </button>
+                <button class="quick-btn" onclick="showStats()">
+                    <span class="quick-icon">📊</span>
+                    Статистика
+                </button>
+                <button class="quick-btn" onclick="exportReports()">
+                    <span class="quick-icon">📤</span>
+                    Експорт
+                </button>
+                <button class="quick-btn" onclick="showSettings()">
+                    <span class="quick-icon">⚙️</span>
+                    Налаштування
+                </button>
+            </div>
+        </div>
+
+        <!-- Швидкі налаштування -->
+        <div class="section slide-up">
+            <div class="section-title">
+                <span>⚡</span>
+                Швидкі налаштування
+            </div>
+            <div class="option-list">
+                <div class="option-item" onclick="toggleDailyReminders()">
+                    <div class="option-content">
+                        <div class="option-title">
+                            Щоденні нагадування
+                            <span class="badge badge-inactive" id="dailyBadge">Вимкнено</span>
+                        </div>
+                        <div class="option-desc">Нагадування про звіт о 18:00</div>
+                    </div>
+                    <div class="option-icon">⏰</div>
+                </div>
+
+                <div class="option-item" onclick="toggleWorkdayReminders()">
+                    <div class="option-content">
+                        <div class="option-title">
+                            Робочі нагадування
+                            <span class="badge badge-inactive" id="workdayBadge">Вимкнено</span>
+                        </div>
+                        <div class="option-desc">Нагадування протягом робочого дня</div>
+                    </div>
+                    <div class="option-icon">💼</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Формат звітів -->
+        <div class="section slide-up">
+            <div class="section-title">
+                <span>📋</span>
+                Формат звітів
+            </div>
+            <div class="option-list">
+                <div class="option-item" onclick="changeFormat('email')">
+                    <div class="option-content">
+                        <div class="option-title">📧 Як лист на пошті</div>
+                        <div class="option-desc">Завдання та опис</div>
+                    </div>
+                    <div class="option-icon" id="formatEmailIcon" style="color: #ccc;">○</div>
+                </div>
+
+                <div class="option-item" onclick="changeFormat('detailed')">
+                    <div class="option-content">
+                        <div class="option-title">📝 Детальний формат</div>
+                        <div class="option-desc">З окремими полями та часом</div>
+                    </div>
+                    <div class="option-icon" id="formatDetailedIcon" style="color: #ccc;">○</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Додаткові дії -->
+        <div class="section slide-up">
+            <div class="section-title">
+                <span>🛠</span>
+                Додатково
+            </div>
+            <div class="option-list">
+                <div class="option-item" onclick="setReminderTime()">
+                    <div class="option-content">
+                        <div class="option-title">⏰ Час нагадування</div>
+                        <div class="option-desc">Налаштувати час щоденного нагадування</div>
+                    </div>
+                    <div class="option-icon">→</div>
+                </div>
+
+                <div class="option-item" onclick="setupOdoo()">
+                    <div class="option-content">
+                        <div class="option-title">🔗 Інтеграція Odoo</div>
+                        <div class="option-desc">Налаштувати підключення до Odoo</div>
+                    </div>
+                    <div class="option-icon">→</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Завантаження -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <div style="color: white; font-weight: 600;">Завантаження...</div>
+        </div>
+    </div>
+
+    <!-- Модальне вікно: Інформація -->
+    <div class="modal" id="infoModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="infoModalTitle">Інформація</div>
+                <button class="modal-close" onclick="closeModal('infoModal')">×</button>
+            </div>
+            <div style="padding: 20px 0; text-align: center;">
+                <div style="font-size: 48px; margin-bottom: 15px;">📬</div>
+                <div id="infoModalMessage" style="color: #666; line-height: 1.6;"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальне вікно: Налаштування -->
+    <div class="modal" id="settingsModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">⚙️ Налаштування</div>
+                <button class="modal-close" onclick="closeModal('settingsModal')">×</button>
+            </div>
+            <div class="option-list">
+                <div class="option-item" onclick="setReminderTime()">
+                    <div class="option-content">
+                        <div class="option-title">⏰ Час нагадування</div>
+                    </div>
+                    <div class="option-icon">→</div>
+                </div>
+                <div class="option-item" onclick="closeModal('settingsModal'); toggleDailyReminders()">
+                    <div class="option-content">
+                        <div class="option-title">📅 Щоденні нагадування</div>
+                    </div>
+                    <div class="option-icon">→</div>
+                </div>
+                <div class="option-item" onclick="closeModal('settingsModal'); toggleWorkdayReminders()">
+                    <div class="option-content">
+                        <div class="option-title">💼 Робочі нагадування</div>
+                    </div>
+                    <div class="option-icon">→</div>
+                </div>
+                <div class="option-item" onclick="closeModal('settingsModal'); setupOdoo()">
+                    <div class="option-content">
+                        <div class="option-title">🔗 Інтеграція Odoo</div>
+                    </div>
+                    <div class="option-icon">→</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast -->
+    <div class="toast" id="toast"></div>
+
+    <script>
+        // Ініціалізація Telegram Web App
+        let tg = window.Telegram.WebApp;
+        tg.expand();
+        tg.setHeaderColor('#4facfe');
+        tg.setBackgroundColor('#4facfe');
+
+        // Ініціалізація
+        function init() {
+            try {
+                // Отримуємо дані з URL
+                const urlParams = new URLSearchParams(window.location.search);
+                const userName = urlParams.get('name') || tg.initDataUnsafe?.user?.first_name || 'Користувач';
+                const dailyEnabled = urlParams.get('daily') === '1';
+                const workdayEnabled = urlParams.get('workday') === '1';
+                const format = urlParams.get('format') || 'email';
+
+                document.getElementById('userName').textContent = userName;
+
+                // Оновлюємо бейджі
+                updateBadge('dailyBadge', dailyEnabled);
+                updateBadge('workdayBadge', workdayEnabled);
+
+                // Оновлюємо формат
+                updateFormatIcons(format);
+
+                hideLoading();
+            } catch (e) {
+                console.error('Init error:', e);
+                hideLoading();
+            }
+        }
+
+        // Оновлення бейджа
+        function updateBadge(badgeId, isActive) {
+            const badge = document.getElementById(badgeId);
+            if (isActive) {
+                badge.className = 'badge badge-active';
+                badge.textContent = 'Увімкнено';
+            } else {
+                badge.className = 'badge badge-inactive';
+                badge.textContent = 'Вимкнено';
+            }
+        }
+
+        // Оновлення іконок формату
+        function updateFormatIcons(format) {
+            const emailIcon = document.getElementById('formatEmailIcon');
+            const detailedIcon = document.getElementById('formatDetailedIcon');
+
+            if (format === 'email') {
+                emailIcon.textContent = '●';
+                emailIcon.style.color = '#4facfe';
+                detailedIcon.textContent = '○';
+                detailedIcon.style.color = '#ccc';
+            } else {
+                emailIcon.textContent = '○';
+                emailIcon.style.color = '#ccc';
+                detailedIcon.textContent = '●';
+                detailedIcon.style.color = '#4facfe';
+            }
+        }
+
+        // Відправка команди боту
+        function sendCommand(action, params = {}) {
+            if (tg.HapticFeedback) {
+                tg.HapticFeedback.impactOccurred('medium');
+            }
+
+            tg.sendData(JSON.stringify({
+                action: action,
+                params: params,
+                timestamp: Date.now()
+            }));
+        }
+
+        // Показати інформацію та відправити команду
+        function showInfoAndSend(title, message, action, params = {}) {
+            openModal('infoModal');
+            document.getElementById('infoModalTitle').textContent = title;
+            document.getElementById('infoModalMessage').textContent = message;
+
+            setTimeout(() => {
+                sendCommand(action, params);
+                setTimeout(() => {
+                    closeModal('infoModal');
+                }, 2000);
+            }, 500);
+        }
+
+        // Функції користувача
+        function createReport() {
+            showInfoAndSend('📝 Створити звіт', 'Відкриється форма для створення звіту.', 'create_report');
+        }
+
+        function showStats() {
+            showInfoAndSend('📊 Статистика', 'Ваша статистика за 30 днів буде відправлена в чат.', 'get_stats');
+        }
+
+        function exportReports() {
+            showInfoAndSend('📤 Експорт', 'Файл Excel з вашими звітами буде відправлено в чат.', 'export_reports');
+        }
+
+        function showSettings() {
+            openModal('settingsModal');
+        }
+
+        function toggleDailyReminders() {
+            showInfoAndSend('⏰ Щоденні нагадування', 'Налаштування щоденних нагадувань буде відправлено в чат.', 'toggle_daily_reminders');
+        }
+
+        function toggleWorkdayReminders() {
+            showInfoAndSend('💼 Робочі нагадування', 'Налаштування робочих нагадувань буде відправлено в чат.', 'toggle_workday_reminders');
+        }
+
+        function changeFormat(format) {
+            updateFormatIcons(format);
+            showInfoAndSend('📋 Формат змінено', `Формат звітів змінено на "${format === 'email' ? 'Як лист на пошті' : 'Детальний'}".`, 'change_format', { format: format });
+        }
+
+        function setReminderTime() {
+            showInfoAndSend('⏰ Час нагадування', 'Форма для встановлення часу нагадування буде відправлена в чат.', 'set_reminder_time');
+        }
+
+        function setupOdoo() {
+            showInfoAndSend('🔗 Інтеграція Odoo', 'Інструкції для налаштування Odoo будуть відправлені в чат.', 'setup_odoo');
+        }
+
+        // Модальні вікна
+        function openModal(id) {
+            document.getElementById(id).classList.add('active');
+            if (tg.HapticFeedback) tg.HapticFeedback.impactOccurred('medium');
+        }
+
+        function closeModal(id) {
+            document.getElementById(id).classList.remove('active');
+        }
+
+        // Завантаження
+        function showLoading() {
+            document.getElementById('loading').classList.add('active');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('active');
+        }
+
+        // Toast
+        function showToast(message, type = 'success') {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.className = `toast toast-${type} active`;
+            setTimeout(() => toast.classList.remove('active'), 3000);
+        }
+
+        // Закриття модалок при кліку поза ними
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.classList.remove('active');
+                    }
+                });
+            });
+        });
+
+        // Готовність
+        tg.ready();
+        init();
+    </script>
+</body>
+</html>
+

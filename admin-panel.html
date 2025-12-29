@@ -650,6 +650,20 @@
         </div>
     </div>
 
+    <!-- Модальне вікно: Інформація -->
+    <div class="modal" id="infoModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title" id="infoModalTitle">Інформація</div>
+                <button class="modal-close" onclick="closeModal('infoModal')">×</button>
+            </div>
+            <div style="padding: 20px 0; text-align: center;">
+                <div style="font-size: 48px; margin-bottom: 15px;">📬</div>
+                <div id="infoModalMessage" style="color: #666; line-height: 1.6;"></div>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast сповіщення -->
     <div class="toast" id="toast"></div>
 
@@ -724,22 +738,38 @@
 
         // Показати очікуючих користувачів
         function showPendingUsers() {
-            requestData('get_pending_users');
+            showInfoAndSend('⏳ Очікуючі користувачі', 'Список очікуючих користувачів буде відправлено в чат. Ви зможете підтвердити або відхилити заявки прямо з чату.', 'get_pending_users');
         }
 
         // Показати всіх користувачів
         function showAllUsers() {
-            requestData('get_all_users');
+            showInfoAndSend('👥 Всі користувачі', 'Список всіх користувачів буде відправлено в чат з їх статусами (активний/заблокований).', 'get_all_users');
         }
 
         // Показати статистику
         function showStats() {
-            requestData('get_stats');
+            showInfoAndSend('📊 Статистика', 'Детальна статистика по всіх користувачах (звіти, години) буде відправлена в чат.', 'get_stats');
         }
 
         // Показати звіти
         function showReports() {
-            requestData('get_reports');
+            showInfoAndSend('📋 Останні звіти', 'Список останніх звітів (7 днів) буде відправлено в чат.', 'get_reports');
+        }
+        
+        // Показати інформацію та відправити команду
+        function showInfoAndSend(title, message, action, params = {}) {
+            openModal('infoModal');
+            document.getElementById('infoModalTitle').textContent = title;
+            document.getElementById('infoModalMessage').textContent = message;
+            
+            // Відправляємо команду боту
+            setTimeout(() => {
+                requestData(action, params);
+                // Закриваємо модалку через 2 секунди
+                setTimeout(() => {
+                    closeModal('infoModal');
+                }, 2000);
+            }, 500);
         }
 
         // Форми
@@ -751,33 +781,36 @@
             e.preventDefault();
             const userId = document.getElementById('renameUserId').value;
             const newName = document.getElementById('renameUserName').value;
-            requestData('rename_user', { user_id: userId, new_name: newName });
+            closeModal('renameModal');
+            showInfoAndSend('✏️ Перейменування', `Користувача ID ${userId} буде перейменовано на "${newName}". Результат буде відправлено в чат.`, 'rename_user', { user_id: userId, new_name: newName });
         }
 
         function submitBlock(e) {
             e.preventDefault();
             const userId = document.getElementById('blockUserId').value;
-            requestData('block_user', { user_id: userId });
+            closeModal('blockModal');
+            showInfoAndSend('🚫 Блокування', `Користувача ID ${userId} буде заблоковано. Підтвердження буде в чаті.`, 'block_user', { user_id: userId });
         }
 
         function submitAnnouncement(e) {
             e.preventDefault();
             const text = document.getElementById('announcementText').value;
-            requestData('send_announcement', { text: text });
+            closeModal('announcementModal');
+            showInfoAndSend('📢 Розсилка', `Сповіщення буде надіслано всім користувачам. Статистика буде в чаті.`, 'send_announcement', { text: text });
         }
 
         function exportReports() {
-            requestData('export_reports');
+            showInfoAndSend('📤 Експорт', 'Файл Excel зі звітами буде відправлено в чат.', 'export_reports');
         }
 
         function confirmClearReports() {
             if (confirm('Ви впевнені, що хочете видалити всі звіти? Цю дію не можна скасувати!')) {
-                requestData('clear_reports');
+                showInfoAndSend('🗑️ Очищення', 'Всі звіти будуть видалені. Підтвердження буде в чаті.', 'clear_reports');
             }
         }
 
         function syncOdoo() {
-            requestData('sync_odoo');
+            showInfoAndSend('🔄 Синхронізація Odoo', 'Синхронізація з Odoo запущена. Результат буде в чаті.', 'sync_odoo');
         }
 
         // Модальні вікна
@@ -806,6 +839,17 @@
             toast.className = `toast toast-${type} active`;
             setTimeout(() => toast.classList.remove('active'), 3000);
         }
+
+        // Закриття модалок при кліку поза ними
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', (e) => {
+                    if (e.target === modal) {
+                        modal.classList.remove('active');
+                    }
+                });
+            });
+        });
 
         // Готовність
         tg.ready();

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="uk">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -240,7 +241,8 @@
             font-size: 14px;
         }
 
-        .form-input, .form-select {
+        .form-input,
+        .form-select {
             width: 100%;
             padding: 12px;
             border: 2px solid #e0e0e0;
@@ -249,7 +251,8 @@
             transition: all 0.3s ease;
         }
 
-        .form-input:focus, .form-select:focus {
+        .form-input:focus,
+        .form-select:focus {
             outline: none;
             border-color: #4facfe;
             box-shadow: 0 0 0 3px rgba(79, 172, 254, 0.1);
@@ -325,11 +328,11 @@
             border-radius: 50%;
         }
 
-        input:checked + .toggle-slider {
+        input:checked+.toggle-slider {
             background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
         }
 
-        input:checked + .toggle-slider:before {
+        input:checked+.toggle-slider:before {
             transform: translateX(22px);
         }
 
@@ -355,13 +358,23 @@
         }
 
         @keyframes spin {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
         }
 
         @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
 
         @keyframes slideUp {
@@ -369,6 +382,7 @@
                 opacity: 0;
                 transform: translateY(30px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -474,6 +488,7 @@
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <!-- Заголовок -->
@@ -609,6 +624,39 @@
         </div>
     </div>
 
+    <!-- Модальне вікно: Налаштування Odoo -->
+    <div class="modal" id="odooModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <div class="modal-title">🔗 Налаштування Odoo</div>
+                <button class="modal-close" onclick="closeModal('odooModal')">×</button>
+            </div>
+            <div class="form-group">
+                <label class="form-label">URL Odoo</label>
+                <input type="text" id="odooUrl" class="form-input" placeholder="https://erp.example.com"
+                    value="https://erp.antenor.io">
+            </div>
+            <div class="form-group">
+                <label class="form-label">База даних</label>
+                <input type="text" id="odooDb" class="form-input" placeholder="odoo-db">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Логін (Email)</label>
+                <input type="email" id="odooLogin" class="form-input" placeholder="user@example.com">
+            </div>
+            <div class="form-group">
+                <label class="form-label">Пароль</label>
+                <input type="password" id="odooPassword" class="form-input" placeholder="••••••••">
+            </div>
+            <div class="form-group">
+                <label class="form-label">ID завдання (необов'язково)</label>
+                <input type="number" id="odooTaskId" class="form-input" placeholder="12345">
+            </div>
+            <button class="btn btn-primary" onclick="saveOdooSettings()">Зберегти налаштування</button>
+            <button class="btn btn-secondary" onclick="closeModal('odooModal')">Скасувати</button>
+        </div>
+    </div>
+
     <!-- Модальне вікно: Налаштування -->
     <div class="modal" id="settingsModal">
         <div class="modal-content">
@@ -666,6 +714,12 @@
                 const format = urlParams.get('format') || 'email';
 
                 document.getElementById('userName').textContent = userName;
+
+                // Попереднє заповнення Odoo (якщо передано)
+                if (urlParams.get('odoo_url')) document.getElementById('odooUrl').value = urlParams.get('odoo_url');
+                if (urlParams.get('odoo_db')) document.getElementById('odooDb').value = urlParams.get('odoo_db');
+                if (urlParams.get('odoo_user')) document.getElementById('odooLogin').value = urlParams.get('odoo_user');
+                if (urlParams.get('odoo_task')) document.getElementById('odooTaskId').value = urlParams.get('odoo_task');
 
                 // Оновлюємо бейджі
                 updateBadge('dailyBadge', dailyEnabled);
@@ -773,7 +827,30 @@
         }
 
         function setupOdoo() {
-            showInfoAndSend('🔗 Інтеграція Odoo', 'Інструкції для налаштування Odoo будуть відправлені в чат.', 'setup_odoo');
+            openModal('odooModal');
+        }
+
+        function saveOdooSettings() {
+            const url = document.getElementById('odooUrl').value.trim();
+            const db = document.getElementById('odooDb').value.trim();
+            const username = document.getElementById('odooLogin').value.trim();
+            const password = document.getElementById('odooPassword').value.trim();
+            const taskId = document.getElementById('odooTaskId').value.trim();
+
+            if (!url || !db || !username || !password) {
+                showToast('Будь ласка, заповніть всі обов\'язкові поля', 'error');
+                return;
+            }
+
+            showInfoAndSend('🔗 Налаштування Odoo', 'Налаштування зберігаються...', 'save_odoo_settings', {
+                url: url,
+                db: db,
+                username: username,
+                password: password,
+                task_id: taskId ? parseInt(taskId) : null
+            });
+
+            closeModal('odooModal');
         }
 
         // Модальні вікна
@@ -804,7 +881,7 @@
         }
 
         // Закриття модалок при кліку поза ними
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             document.querySelectorAll('.modal').forEach(modal => {
                 modal.addEventListener('click', (e) => {
                     if (e.target === modal) {
@@ -819,5 +896,5 @@
         init();
     </script>
 </body>
-</html>
 
+</html>

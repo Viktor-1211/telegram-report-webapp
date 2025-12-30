@@ -632,25 +632,12 @@
                 <button class="modal-close" onclick="closeModal('odooModal')">×</button>
             </div>
             <div class="form-group">
-                <label class="form-label">URL Odoo</label>
-                <input type="text" id="odooUrl" class="form-input" placeholder="https://erp.example.com"
-                    value="https://erp.antenor.io">
-            </div>
-            <div class="form-group">
-                <label class="form-label">База даних</label>
-                <input type="text" id="odooDb" class="form-input" placeholder="odoo-db">
-            </div>
-            <div class="form-group">
                 <label class="form-label">Логін (Email)</label>
                 <input type="email" id="odooLogin" class="form-input" placeholder="user@example.com">
             </div>
             <div class="form-group">
                 <label class="form-label">Пароль</label>
                 <input type="password" id="odooPassword" class="form-input" placeholder="••••••••">
-            </div>
-            <div class="form-group">
-                <label class="form-label">ID завдання (необов'язково)</label>
-                <input type="number" id="odooTaskId" class="form-input" placeholder="12345">
             </div>
             <button class="btn btn-primary" onclick="saveOdooSettings()">Зберегти налаштування</button>
             <button class="btn btn-secondary" onclick="closeModal('odooModal')">Скасувати</button>
@@ -716,10 +703,7 @@
                 document.getElementById('userName').textContent = userName;
 
                 // Попереднє заповнення Odoo (якщо передано)
-                if (urlParams.get('odoo_url')) document.getElementById('odooUrl').value = urlParams.get('odoo_url');
-                if (urlParams.get('odoo_db')) document.getElementById('odooDb').value = urlParams.get('odoo_db');
                 if (urlParams.get('odoo_user')) document.getElementById('odooLogin').value = urlParams.get('odoo_user');
-                if (urlParams.get('odoo_task')) document.getElementById('odooTaskId').value = urlParams.get('odoo_task');
 
                 // Оновлюємо бейджі
                 updateBadge('dailyBadge', dailyEnabled);
@@ -831,23 +815,17 @@
         }
 
         function saveOdooSettings() {
-            const url = document.getElementById('odooUrl').value.trim();
-            const db = document.getElementById('odooDb').value.trim();
             const username = document.getElementById('odooLogin').value.trim();
             const password = document.getElementById('odooPassword').value.trim();
-            const taskId = document.getElementById('odooTaskId').value.trim();
 
-            if (!url || !db || !username || !password) {
+            if (!username || !password) {
                 showToast('Будь ласка, заповніть всі обов\'язкові поля', 'error');
                 return;
             }
 
             showInfoAndSend('🔗 Налаштування Odoo', 'Налаштування зберігаються...', 'save_odoo_settings', {
-                url: url,
-                db: db,
                 username: username,
-                password: password,
-                task_id: taskId ? parseInt(taskId) : null
+                password: password
             });
 
             closeModal('odooModal');

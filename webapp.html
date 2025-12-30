@@ -781,11 +781,14 @@
         }
 
         document.addEventListener('DOMContentLoaded', () => {
+            tg.ready();
             updateDate();
             renderTasks();
             tg.MainButton.setText('Надіслати звіт');
             tg.MainButton.onClick(submitReport);
-            tg.MainButton.show(); // Show button by default for the report tab
+
+            // Force "report" tab state on load
+            switchTab('report');
 
             // Initialization via URL data
             const urlParams = new URLSearchParams(window.location.search);

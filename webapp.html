@@ -545,7 +545,8 @@
             <div class="card" style="margin-top: 24px;">
                 <label>Повідомлення</label>
                 <div style="display: flex; flex-direction: column; gap: 10px;">
-                    <button class="btn btn-primary" onclick="openMessageModal('all')">📢 Надіслати повідомлення всім</button>
+                    <button class="btn btn-primary" onclick="openMessageModal('all')">📢 Надіслати повідомлення
+                        всім</button>
                 </div>
             </div>
 
@@ -600,7 +601,8 @@
                 <button id="btn-block" class="btn btn-danger" onclick="adminUserAction('block')">Блокувати</button>
             </div>
             <div style="display: flex; gap: 10px; margin-top: 10px;">
-                <button class="btn btn-secondary" onclick="openMessageModal('single')">📨 Надіслати повідомлення</button>
+                <button class="btn btn-secondary" onclick="openMessageModal('single')">📨 Надіслати
+                    повідомлення</button>
                 <button class="btn btn-secondary" onclick="openUserReportsModal()">📋 Переглянути звіти</button>
             </div>
             <button id="btn-rename" class="btn btn-secondary" style="margin-top: 10px;"
@@ -619,8 +621,8 @@
 
             <div class="form-group">
                 <label id="message-recipient-label">Отримувач</label>
-                <textarea id="message-text" rows="6" placeholder="Введіть текст повідомлення..." 
-                    style="width: 100%; padding: 12px; border: 1px solid var(--input-border); 
+                <input type="text" id="message-subject" placeholder="Тема (необов'язково)" style="margin-bottom: 12px;">
+                <textarea id="message-text" rows="6" placeholder="Введіть текст повідомлення..." style="width: 100%; padding: 12px; border: 1px solid var(--input-border); 
                     border-radius: var(--border-radius); font-family: inherit; font-size: 14px;
                     resize: vertical; min-height: 120px;"></textarea>
             </div>
@@ -642,7 +644,7 @@
             </div>
 
             <div class="form-group">
-                <input type="text" placeholder="Пошук за датою або текстом..." id="reports-search" 
+                <input type="text" placeholder="Пошук за датою або текстом..." id="reports-search"
                     oninput="filterReports()" style="width: 100%;">
             </div>
 
@@ -675,6 +677,10 @@
                 <div id="edit-report-tasks" style="display: flex; flex-direction: column; gap: 12px;">
                     <!-- Tasks will be loaded here -->
                 </div>
+                <button type="button" class="btn btn-outline" style="margin-top: 12px; font-size: 14px;"
+                    onclick="addEditTask()">
+                    + Додати завдання
+                </button>
             </div>
 
             <div style="display: flex; gap: 10px; margin-top: 20px;">
@@ -867,6 +873,19 @@
             closeModal();
         }
 
+        function adminUserRename() {
+            const newName = prompt('Введіть нове ім\'я користувача:');
+            if (newName && newName.trim()) {
+                tg.sendData(JSON.stringify({
+                    action: 'admin_v2',
+                    type: 'rename_user',
+                    user_id: state.managingUserId,
+                    new_name: newName.trim()
+                }));
+                closeModal();
+            }
+        }
+
         function adminAction(type) {
             tg.sendData(JSON.stringify({ action: 'admin_v2', type: type }));
         }
@@ -876,7 +895,7 @@
             const modal = document.getElementById('message-modal');
             const title = document.getElementById('message-modal-title');
             const label = document.getElementById('message-recipient-label');
-            
+
             if (type === 'all') {
                 state.messageType = 'all';
                 title.textContent = 'Надіслати повідомлення всім';
@@ -887,8 +906,9 @@
                 title.textContent = 'Надіслати повідомлення';
                 label.textContent = `Отримувач: ${user?.username || 'ID: ' + state.managingUserId}`;
             }
-            
+
             document.getElementById('message-text').value = '';
+            document.getElementById('message-subject').value = '';
             modal.style.display = 'flex';
         }
 
@@ -897,6 +917,7 @@
         }
 
         function sendMessage() {
+            const subject = document.getElementById('message-subject').value.trim();
             const text = document.getElementById('message-text').value.trim();
             if (!text) {
                 alert('Введіть текст повідомлення');
@@ -906,6 +927,7 @@
             const data = {
                 action: 'admin_v2',
                 type: state.messageType === 'all' ? 'send_message_all' : 'send_message_user',
+                subject: subject,
                 message: text
             };
 
@@ -922,16 +944,16 @@
             const modal = document.getElementById('reports-modal');
             const title = document.getElementById('reports-modal-title');
             const user = state.users.find(u => u.id == state.managingUserId);
-            
+
             title.textContent = `Звіти: ${user?.username || 'ID: ' + state.managingUserId}`;
-            
+
             // Request user reports from bot
             tg.sendData(JSON.stringify({
                 action: 'admin_v2',
                 type: 'get_user_reports',
                 user_id: state.managingUserId
             }));
-            
+
             modal.style.display = 'flex';
         }
 
@@ -960,9 +982,9 @@
                             <div class="subtitle">${report.tasks_count || 0} завдань • ${report.total_hours || '0:00'} год</div>
                             ${report.tasks ? `
                                 <div style="margin-top: 8px; font-size: 13px;">
-                                    ${report.tasks.slice(0, 2).map(t => 
-                                        `<div style="color: var(--secondary-text);">• ${t.text || 'Без назви'}</div>`
-                                    ).join('')}
+                                    ${report.tasks.slice(0, 2).map(t =>
+                `<div style="color: var(--secondary-text);">• ${t.text || 'Без назви'}</div>`
+            ).join('')}
                                     ${report.tasks.length > 2 ? `<div style="color: var(--secondary-text);">... та ще ${report.tasks.length - 2}</div>` : ''}
                                 </div>
                             ` : ''}
@@ -988,42 +1010,55 @@
             renderReportsList(filtered);
         }
 
-        function openEditReportModal(reportId) {
-            const report = state.userReports.find(r => r.id === reportId);
-            if (!report) return;
-
-            state.editingReportId = reportId;
-            
-            document.getElementById('edit-report-date').value = report.date || '';
-            
-            // Render tasks
+        function renderEditTasks(tasks) {
             const tasksContainer = document.getElementById('edit-report-tasks');
-            if (report.tasks && report.tasks.length > 0) {
-                tasksContainer.innerHTML = report.tasks.map((task, idx) => `
-                    <div class="card" style="padding: 12px;">
-                        <div class="form-group" style="margin-bottom: 8px;">
-                            <label>Завдання ${idx + 1}</label>
-                            <input type="text" value="${task.text || ''}" 
-                                id="edit-task-text-${idx}" 
-                                placeholder="Опис завдання">
-                        </div>
-                        <div style="display: flex; gap: 10px;">
-                            <div class="form-group" style="flex: 1;">
-                                <label>Години</label>
-                                <input type="number" value="${task.hours || 0}" 
-                                    id="edit-task-hours-${idx}" min="0">
-                            </div>
-                            <div class="form-group" style="flex: 1;">
-                                <label>Хвилини</label>
-                                <input type="number" value="${task.minutes || 0}" 
-                                    id="edit-task-minutes-${idx}" min="0" max="59">
-                            </div>
+            if (tasks && tasks.length > 0) {
+                tasksContainer.innerHTML = tasks.map((task, idx) => `
+                    <div class="task-item" style="margin-bottom: 0;">
+                        <button type="button" class="btn-remove-task" onclick="removeEditTask(${idx})">×</button>
+                        <textarea placeholder="Опишіть завдання..." 
+                            oninput="updateEditTask(${idx}, 'text', this.value)">${task.text || ''}</textarea>
+                        <div style="display: flex; gap: 10px; margin-top: 12px;">
+                            <input type="number" placeholder="Год" style="width: 70px;" 
+                                value="${task.hours || 0}" oninput="updateEditTask(${idx}, 'hours', this.value)">
+                            <input type="number" placeholder="Хв" style="width: 70px;" 
+                                value="${task.minutes || 0}" oninput="updateEditTask(${idx}, 'minutes', this.value)">
+                            <select style="flex: 1;" onchange="updateEditTask(${idx}, 'status', this.value)">
+                                <option value="completed" ${task.status === 'completed' ? 'selected' : ''}>✅ Виконано</option>
+                                <option value="in_progress" ${task.status === 'in_progress' ? 'selected' : ''}>🔄 У процесі</option>
+                                <option value="blocked" ${task.status === 'blocked' ? 'selected' : ''}>🚫 Блокери</option>
+                            </select>
                         </div>
                     </div>
                 `).join('');
             } else {
                 tasksContainer.innerHTML = '<div class="subtitle">Немає завдань</div>';
             }
+        }
+
+        function addEditTask() {
+            state.editingTasks.push({ text: '', hours: 0, minutes: 0, status: 'completed' });
+            renderEditTasks(state.editingTasks);
+        }
+
+        function removeEditTask(idx) {
+            state.editingTasks.splice(idx, 1);
+            renderEditTasks(state.editingTasks);
+        }
+
+        function updateEditTask(idx, field, value) {
+            state.editingTasks[idx][field] = value;
+        }
+
+        function openEditReportModal(reportId) {
+            const report = state.userReports.find(r => r.id === reportId);
+            if (!report) return;
+
+            state.editingReportId = reportId;
+            state.editingTasks = JSON.parse(JSON.stringify(report.tasks || []));
+
+            document.getElementById('edit-report-date').value = report.date || '';
+            renderEditTasks(state.editingTasks);
 
             document.getElementById('edit-report-modal').style.display = 'flex';
         }
@@ -1037,15 +1072,12 @@
             if (!report) return;
 
             const date = document.getElementById('edit-report-date').value;
-            const tasks = [];
-
-            report.tasks.forEach((task, idx) => {
-                const text = document.getElementById(`edit-task-text-${idx}`).value;
-                const hours = parseInt(document.getElementById(`edit-task-hours-${idx}`).value) || 0;
-                const minutes = parseInt(document.getElementById(`edit-task-minutes-${idx}`).value) || 0;
-                
-                tasks.push({ text, hours, minutes });
-            });
+            const tasks = state.editingTasks.map(t => ({
+                text: t.text,
+                hours: parseInt(t.hours) || 0,
+                minutes: parseInt(t.minutes) || 0,
+                status: t.status
+            }));
 
             tg.sendData(JSON.stringify({
                 action: 'admin_v2',

@@ -293,6 +293,42 @@
             text-align: center;
         }
 
+        .history-item {
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .history-details {
+            display: none;
+            padding: 12px;
+            margin-top: 8px;
+            border-top: 1px solid var(--input-border);
+            font-size: 13px;
+            animation: slideDown 0.2s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .history-task {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .history-task:last-child {
+            margin-bottom: 0;
+        }
+
         .user-item {
             background: var(--bg-color);
             padding: 16px;
@@ -1170,15 +1206,37 @@
                 list.innerHTML = '<div class="subtitle" style="text-align:center; padding: 20px;">Історія порожня</div>';
                 return;
             }
-            list.innerHTML = history.map(item => `
-                <div class="card" style="display:flex; justify-content:space-between; align-items:center;">
-                    <div>
-                        <div style="font-weight:600;">${item.date}</div>
-                        <div class="subtitle">${item.tasks_count} завдань</div>
+            list.innerHTML = history.map((item, idx) => {
+                const tasksHtml = (item.tasks || []).map(t => {
+                    const taskText = typeof t === 'string' ? t : t.task;
+                    const emoji = t.status === 'completed' ? '✅' : (t.status === 'blocked' ? '🚫' : '🔄');
+                    const time = (t.hours || t.minutes) ? ` (${t.hours || 0}г ${t.minutes || 0}хв)` : '';
+                    return `<div class="history-task"><span>${emoji}</span><span>${taskText}${time}</span></div>`;
+                }).join('');
+
+                return `
+                <div class="card history-item" onclick="toggleHistory(${idx})">
+                    <div style="display:flex; justify-content:space-between; align-items:center; width: 100%;">
+                        <div>
+                            <div style="font-weight:600;">${item.date}</div>
+                            <div class="subtitle">${item.tasks_count} завдань</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight:700; color:var(--primary-color);">${item.hours} год</div>
+                            <div style="font-size: 10px; color: var(--secondary-text);">Детальніше ▾</div>
+                        </div>
                     </div>
-                    <div style="font-weight:700; color:var(--primary-color);">${item.hours} год</div>
+                    <div id="history-details-${idx}" class="history-details">
+                        ${tasksHtml || '<div class="subtitle">Дані відсутні</div>'}
+                    </div>
                 </div>
-            `).join('');
+            `}).join('');
+        }
+
+        function toggleHistory(idx) {
+            const el = document.getElementById(`history-details-${idx}`);
+            const isVisible = el.style.display === 'block';
+            el.style.display = isVisible ? 'none' : 'block';
         }
 
         function renderUserList(users) {

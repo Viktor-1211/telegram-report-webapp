@@ -375,6 +375,56 @@
         .toast.active {
             display: block;
         }
+
+        /* Odoo Management Styles */
+        .odoo-user-item {
+            padding: 12px;
+            border-bottom: 1px solid #eee;
+            cursor: pointer;
+            transition: background 0.2s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .odoo-user-item:hover {
+            background: #f8f9fa;
+        }
+
+        .odoo-user-item:last-child {
+            border-bottom: none;
+        }
+
+        .odoo-user-info {
+            display: flex;
+            flex-direction: column;
+            gap: 2px;
+        }
+
+        .odoo-user-name {
+            font-weight: 600;
+            font-size: 14px;
+            color: #333;
+        }
+
+        .odoo-user-id {
+            font-size: 11px;
+            color: #888;
+        }
+
+        .odoo-status-badge {
+            font-size: 10px;
+            padding: 3px 8px;
+            border-radius: 8px;
+            background: #f0f0f0;
+            color: #888;
+            font-weight: 600;
+        }
+
+        .odoo-status-active {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
     </style>
 </head>
 
@@ -432,6 +482,13 @@
             <div class="actions-grid">
                 <button class="action-btn" onclick="showAnnouncement()">📢 Надіслати всім</button>
                 <button class="action-btn" onclick="syncOdoo()">🔄 Синхронізація Odoo</button>
+            </div>
+        </div>
+
+        <div class="section">
+            <div class="section-title">⚙️ Налаштування Odoo</div>
+            <div class="actions-grid" style="grid-template-columns: 1fr;">
+                <button class="action-btn" onclick="showOdooManagement()">⚙️ Керування Odoo (всі користувачі)</button>
             </div>
         </div>
     </div>
@@ -507,11 +564,67 @@
         <div>Завантаження...</div>
     </div>
 
+    <div class="modal" id="odooAdminModal">
+        <div class="modal-content" style="max-height: 90vh;">
+            <div class="modal-header">
+                <div class="modal-title">⚙️ Керування Odoo</div>
+                <button class="modal-close" onclick="closeModal('odooAdminModal')">×</button>
+            </div>
+
+            <div id="odooUserListSection">
+                <div class="form-group">
+                    <label class="form-label">Оберіть користувача зі списку:</label>
+                    <div id="odooUsersList"
+                        style="max-height: 400px; overflow-y: auto; border: 2px solid #f0f0f0; border-radius: 12px; padding: 5px;">
+                        <!-- Список користувачів буде тут -->
+                    </div>
+                </div>
+            </div>
+
+            <form id="odooAdminForm" style="display: none;" onsubmit="submitOdooAdminSettings(event)">
+                <input type="hidden" id="odooAdminUserId">
+                <div class="form-group"
+                    style="padding-bottom: 15px; border-bottom: 1px solid #eee; margin-bottom: 20px;">
+                    <label class="form-label" style="margin-bottom: 0;">Користувач: <span id="odooAdminUserName"
+                            style="color: #333; font-weight: bold;"></span></label>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">URL Odoo</label>
+                    <input type="url" class="form-input" id="odooAdminUrl" placeholder="https://erp.antenor.io"
+                        required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">База даних</label>
+                    <input type="text" class="form-input" id="odooAdminDb" placeholder="odoo-db" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Логін (Email)</label>
+                    <input type="email" class="form-input" id="odooAdminLogin" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">Пароль</label>
+                    <input type="text" class="form-input" id="odooAdminPass" required>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">ID завдання (необов'язково)</label>
+                    <input type="number" class="form-input" id="odooAdminTaskId">
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 20px;">
+                    <button type="submit" class="btn btn-primary" style="margin-top: 0;">Зберегти</button>
+                    <button type="button" class="btn btn-secondary" style="margin-top: 0;"
+                        onclick="backToOdooList()">Назад</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <div class="toast" id="toast"></div>
 
     <script>
         let tg = window.Telegram.WebApp;
         tg.expand();
+
+        let odooUsers = [];
 
         async function init() {
             const urlParams = new URLSearchParams(window.location.search);
@@ -525,6 +638,16 @@
                 const badge = document.getElementById('pendingBadge');
                 badge.textContent = pending;
                 badge.style.display = 'inline-block';
+            }
+
+            // Parse Odoo data
+            try {
+                const odooData = urlParams.get('odoo');
+                if (odooData) {
+                    odooUsers = JSON.parse(odooData);
+                }
+            } catch (e) {
+                console.error("Помилка парсингу Odoo даних:", e);
             }
         }
 
@@ -575,6 +698,83 @@
 
         function exportReports() { showInfoAndSend('📤 Експорт', 'Файл Excel буде відправлено в чат.', 'export_reports'); }
         function syncOdoo() { showInfoAndSend('🔄 Odoo', 'Синхронізація запущена.', 'sync_odoo'); }
+
+        function showOdooManagement() {
+            renderOdooUsers();
+            openModal('odooAdminModal');
+            document.getElementById('odooUserListSection').style.display = 'block';
+            document.getElementById('odooAdminForm').style.display = 'none';
+        }
+
+        function renderOdooUsers() {
+            const listContainer = document.getElementById('odooUsersList');
+            listContainer.innerHTML = '';
+
+            if (odooUsers.length === 0) {
+                listContainer.innerHTML = '<div style="padding: 20px; text-align: center; color: #888;">Користувачів не знайдено</div>';
+                return;
+            }
+
+            // Сортуємо: спочатку ті, у кого є налаштування
+            const sortedUsers = [...odooUsers].sort((a, b) => {
+                const aHas = (a.url || a.odoo_user) ? 1 : 0;
+                const bHas = (b.url || b.odoo_user) ? 1 : 0;
+                return bHas - aHas;
+            });
+
+            sortedUsers.forEach(user => {
+                const item = document.createElement('div');
+                item.className = 'odoo-user-item';
+                item.onclick = () => editUserOdoo(user);
+
+                const hasSettings = user.url || user.odoo_user;
+                const badge = hasSettings ? '<span class="odoo-status-badge odoo-status-active">Налаштовано</span>' : '<span class="odoo-status-badge">Не налаштовано</span>';
+
+                item.innerHTML = `
+                    <div class="odoo-user-info">
+                        <span class="odoo-user-name">${user.username || 'Без імені'}</span>
+                        <span class="odoo-user-id">ID: ${user.user_id}</span>
+                    </div>
+                    ${badge}
+                `;
+                listContainer.appendChild(item);
+            });
+        }
+
+        function editUserOdoo(user) {
+            document.getElementById('odooUserListSection').style.display = 'none';
+            document.getElementById('odooAdminForm').style.display = 'block';
+
+            document.getElementById('odooAdminUserId').value = user.user_id;
+            document.getElementById('odooAdminUserName').textContent = user.username || `ID: ${user.user_id}`;
+            document.getElementById('odooAdminUrl').value = user.url || 'https://erp.antenor.io';
+            document.getElementById('odooAdminDb').value = user.db || 'odoo-db';
+            document.getElementById('odooAdminLogin').value = user.odoo_user || '';
+            document.getElementById('odooAdminPass').value = user.odoo_pass || '';
+            document.getElementById('odooAdminTaskId').value = user.task_id || '';
+        }
+
+        function backToOdooList() {
+            document.getElementById('odooUserListSection').style.display = 'block';
+            document.getElementById('odooAdminForm').style.display = 'none';
+        }
+
+        function submitOdooAdminSettings(e) {
+            e.preventDefault();
+            const userId = document.getElementById('odooAdminUserId').value;
+            const data = {
+                user_id: userId,
+                url: document.getElementById('odooAdminUrl').value,
+                db: document.getElementById('odooAdminDb').value,
+                username: document.getElementById('odooAdminLogin').value,
+                password: document.getElementById('odooAdminPass').value,
+                task_id: document.getElementById('odooAdminTaskId').value
+            };
+
+            closeModal('odooAdminModal');
+            showInfoAndSend('⚙️ Odoo', `Налаштування для користувача ${userId} будуть збережені.`, 'save_odoo_admin_settings', data);
+        }
+
         function confirmClearReports() {
             if (confirm('Видалити всі звіти?')) {
                 showInfoAndSend('🗑️ Очищення', 'Всі звіти будуть видалені.', 'clear_reports');

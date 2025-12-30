@@ -1208,9 +1208,9 @@
             }
             list.innerHTML = history.map((item, idx) => {
                 const tasksHtml = (item.tasks || []).map(t => {
-                    const taskText = typeof t === 'string' ? t : t.task;
-                    const emoji = t.status === 'completed' ? '✅' : (t.status === 'blocked' ? '🚫' : '🔄');
-                    const time = (t.hours || t.minutes) ? ` (${t.hours || 0}г ${t.minutes || 0}хв)` : '';
+                    const taskText = t.t || '';
+                    const emoji = t.s === 'completed' ? '✅' : (t.s === 'blocked' ? '🚫' : '🔄');
+                    const time = (t.h || t.m) ? ` (${t.h || 0}г ${t.m || 0}хв)` : '';
                     return `<div class="history-task"><span>${emoji}</span><span>${taskText}${time}</span></div>`;
                 }).join('');
 

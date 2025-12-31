@@ -1181,9 +1181,29 @@
                     // Update History
                     renderHistory(initData.history);
 
-                    // Admin SPA Pre-load
+                    // Admin SPA Pre-load Decompression
                     if (state.isAdmin && initData.admin?.recent_reports) {
-                        state.adminReports = initData.admin.recent_reports;
+                        try {
+                            const decompressed = {};
+                            for (const [uid, reports] of Object.entries(initData.admin.recent_reports)) {
+                                decompressed[uid] = reports.map(r => ({
+                                    id: r.i,
+                                    date: r.d,
+                                    tasks_count: r.tc,
+                                    total_hours: r.th,
+                                    tasks: r.t.map(t => ({
+                                        text: t.t,
+                                        hours: t.h,
+                                        minutes: t.m,
+                                        status: t.s === 1 ? 'completed' : 'in_progress'
+                                    }))
+                                }));
+                            }
+                            state.adminReports = decompressed;
+                        } catch (err) {
+                            console.error('Decompression error:', err);
+                            state.adminReports = {};
+                        }
                     }
 
                 } catch (e) {

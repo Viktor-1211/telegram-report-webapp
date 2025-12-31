@@ -456,27 +456,6 @@
             <div id="history-list"></div>
         </div>
 
-        <!-- Tab: Stats -->
-        <div id="tab-stats" class="tab-content">
-            <header>
-                <h1>Статистика</h1>
-                <div class="subtitle">Ваш прогрес за місяць</div>
-            </header>
-            <div class="stat-grid">
-                <div class="stat-card">
-                    <div class="stat-value" id="stat-total-reports">0</div>
-                    <div class="stat-label">Звітів</div>
-                </div>
-                <div class="stat-card">
-                    <div class="stat-value" id="stat-total-hours">0</div>
-                    <div class="stat-label">Годин</div>
-                </div>
-            </div>
-            <div class="card">
-                <h3 style="margin-bottom: 12px; font-size: 16px;">Топ завдань</h3>
-                <div id="top-tasks-list"></div>
-            </div>
-        </div>
 
         <!-- Tab: Settings -->
         <div id="tab-settings" class="tab-content">
@@ -736,10 +715,6 @@
             <span class="nav-icon">🕒</span>
             <span>Історія</span>
         </a>
-        <a href="#" class="nav-item" onclick="switchTab('stats')">
-            <span class="nav-icon">📊</span>
-            <span>Стат</span>
-        </a>
         <a href="#" class="nav-item" onclick="switchTab('settings')">
             <span class="nav-icon">⚙️</span>
             <span>Параметри</span>
@@ -777,7 +752,7 @@
             document.getElementById(`tab-${tabId}`).classList.add('active');
 
             const navItems = document.querySelectorAll('.nav-item');
-            const idx = { report: 0, history: 1, stats: 2, settings: 3, admin: 4 };
+            const idx = { report: 0, history: 1, settings: 2, admin: 3 };
             navItems[idx[tabId]].classList.add('active');
 
             if (tabId === 'report') tg.MainButton.show();
@@ -1188,9 +1163,6 @@
 
                     toggleWorkdayDetails(state.settings.workday_reminders);
 
-                    // Update Stats
-                    document.getElementById('stat-total-reports').textContent = initData.stats.total_reports;
-                    document.getElementById('stat-total-hours').textContent = initData.stats.total_hours;
 
                     // Update History
                     renderHistory(initData.history);

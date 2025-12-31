@@ -965,12 +965,9 @@
 
             title.textContent = `Звіти: ${user?.username || 'ID: ' + state.managingUserId}`;
 
-            // Request user reports from bot
-            tg.sendData(JSON.stringify({
-                action: 'admin_v2',
-                type: 'get_user_reports',
-                user_id: state.managingUserId
-            }));
+            // SPA mode: use pre-loaded reports
+            const reports = (state.adminReports && state.adminReports[state.managingUserId]) || [];
+            loadUserReports(reports);
 
             modal.style.display = 'flex';
         }
@@ -1184,15 +1181,9 @@
                     // Update History
                     renderHistory(initData.history);
 
-                    // Check for admin reports view
-                    const reportsData = urlParams.get('reports');
-                    const targetId = urlParams.get('target_id');
-                    if (reportsData && targetId) {
-                        state.managingUserId = targetId;
-                        const reports = JSON.parse(decodeURIComponent(reportsData));
-                        switchTab('admin');
-                        openUserReportsModal();
-                        loadUserReports(reports);
+                    // Admin SPA Pre-load
+                    if (state.isAdmin && initData.admin?.recent_reports) {
+                        state.adminReports = initData.admin.recent_reports;
                     }
 
                 } catch (e) {

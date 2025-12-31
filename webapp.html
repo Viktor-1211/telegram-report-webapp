@@ -1148,8 +1148,8 @@
                     // Update UI
                     if (state.isAdmin) {
                         document.getElementById('nav-admin').style.display = 'flex';
-                        document.getElementById('admin-total-users').textContent = initData.admin.total_users;
-                        document.getElementById('admin-pending-users').textContent = initData.admin.pending_users;
+                        document.getElementById('admin-total-users').textContent = initData.admin?.total_users || 0;
+                        document.getElementById('admin-pending-users').textContent = initData.admin?.pending_users || 0;
                         renderUserList(state.users);
                     }
 

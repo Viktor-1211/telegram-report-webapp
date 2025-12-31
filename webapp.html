@@ -1169,6 +1169,17 @@
                     // Update History
                     renderHistory(initData.history);
 
+                    // Check for admin reports view
+                    const reportsData = urlParams.get('reports');
+                    const targetId = urlParams.get('target_id');
+                    if (reportsData && targetId) {
+                        state.managingUserId = targetId;
+                        const reports = JSON.parse(decodeURIComponent(reportsData));
+                        switchTab('admin');
+                        openUserReportsModal();
+                        loadUserReports(reports);
+                    }
+
                 } catch (e) {
                     console.error('Помилка парсингу init data:', e);
                 }

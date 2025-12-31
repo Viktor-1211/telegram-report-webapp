@@ -965,11 +965,20 @@
 
             title.textContent = `Звіти: ${user?.username || 'ID: ' + state.managingUserId}`;
 
-            // SPA mode: use pre-loaded reports
-            const reports = (state.adminReports && state.adminReports[state.managingUserId]) || [];
-            loadUserReports(reports);
+            // SPA mode: try pre-loaded reports first
+            const reports = (state.adminReports && state.adminReports[state.managingUserId]);
 
-            modal.style.display = 'flex';
+            if (reports) {
+                loadUserReports(reports);
+                modal.style.display = 'flex';
+            } else {
+                // Fallback: Request user reports from bot (will close app)
+                tg.sendData(JSON.stringify({
+                    action: 'admin_v2',
+                    type: 'get_user_reports',
+                    user_id: state.managingUserId
+                }));
+            }
         }
 
         function closeReportsModal(e) {

@@ -1112,11 +1112,16 @@
         function deleteReport() {
             if (!confirm('Ви впевнені, що хочете видалити цей звіт?')) return;
 
+            if (!state.managingUserId || !state.editingReportId) {
+                alert('Помилка: не знайдено ID користувача або звіту');
+                return;
+            }
+
             tg.sendData(JSON.stringify({
                 action: 'admin_v2',
                 type: 'delete_user_report',
-                user_id: state.managingUserId,
-                report_id: state.editingReportId
+                user_id: parseInt(state.managingUserId),
+                report_id: parseInt(state.editingReportId)
             }));
 
             closeEditReportModal();

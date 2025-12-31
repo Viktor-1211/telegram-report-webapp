@@ -3,38 +3,139 @@
 
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Щоденний звіт</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Report Bot Pro</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --primary-color: var(--tg-theme-button-color, #007AFF);
+            --primary-text: var(--tg-theme-text-color, #000000);
+            --secondary-text: var(--tg-theme-hint-color, #8e8e93);
+            --bg-color: var(--tg-theme-bg-color, #ffffff);
+            --secondary-bg: var(--tg-theme-secondary-bg-color, #f2f2f7);
+            --header-bg: var(--tg-theme-header-bg-color, var(--tg-theme-secondary-bg-color, #f2f2f7));
+            --section-header-text: var(--tg-theme-section-header-text-color, #6d6d71);
+            --section-separator: var(--tg-theme-section-separator-color, #c8c7cc);
+            --accent-color: #34c759;
+            --error-color: #ff3b30;
+            --warning-color: #ff9500;
+            --border-radius: 12px;
+            --transition: all 0.2s ease;
+            --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+            --input-border: rgba(0, 0, 0, 0.05);
+        }
+
+        /* Dark Mode overrides if Telegram doesn't provide them correctly */
+        @media (prefers-color-scheme: dark) {
+            :root {
+                --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+                --input-border: rgba(255, 255, 255, 0.1);
+            }
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Arial, sans-serif;
-            background: var(--tg-theme-bg-color, #ffffff);
-            color: var(--tg-theme-text-color, #000000);
-            padding: 20px;
+            font-family: 'Inter', -apple-system, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--primary-text);
+            line-height: 1.5;
+            overflow-x: hidden;
+            padding-bottom: 90px;
         }
 
         .container {
             max-width: 600px;
             margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            margin-bottom: 24px;
         }
 
         h1 {
-            font-size: 24px;
-            margin-bottom: 10px;
-            color: var(--tg-theme-text-color);
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 4px;
         }
 
-        .date {
-            color: var(--tg-theme-hint-color, #999);
-            margin-bottom: 20px;
+        .subtitle {
             font-size: 14px;
+            color: var(--secondary-text);
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.3s ease;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            right: 0;
+            background: var(--bg-color);
+            /* Fallback */
+            background: var(--tg-theme-secondary-bg-color, rgba(255, 255, 255, 0.85));
+            border-top: 1px solid var(--section-separator);
+            z-index: 1000;
+            display: flex;
+            justify-content: space-around;
+            padding: 12px 5px calc(12px + var(--tg-safe-area-inset-bottom, 0px));
+            border-top: 1px solid rgba(0, 0, 0, 0.08);
+            z-index: 1000;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            text-decoration: none;
+            color: var(--secondary-text);
+            font-size: 10px;
+            font-weight: 600;
+            flex: 1;
+            transition: var(--transition);
+        }
+
+        .nav-item.active {
+            color: var(--primary-color);
+        }
+
+        .nav-icon {
+            font-size: 22px;
+        }
+
+        .card {
+            background: var(--secondary-bg);
+            border-radius: var(--border-radius);
+            padding: 16px;
+            margin-bottom: 16px;
         }
 
         .form-group {
@@ -43,9 +144,10 @@
 
         label {
             display: block;
+            font-size: 14px;
+            font-weight: 600;
             margin-bottom: 8px;
-            font-weight: 500;
-            color: var(--tg-theme-text-color);
+            color: var(--primary-text);
         }
 
         input,
@@ -53,371 +155,1116 @@
         select {
             width: 100%;
             padding: 12px;
-            border: 1px solid var(--tg-theme-hint-color, #ddd);
-            border-radius: 8px;
+            border: 1px solid var(--input-border);
+            border-radius: 10px;
             font-size: 16px;
-            background: var(--tg-theme-bg-color, #fff);
-            color: var(--tg-theme-text-color, #000);
+            background: var(--bg-color);
+            color: var(--primary-text);
             font-family: inherit;
+            transition: var(--transition);
         }
 
-        textarea {
-            min-height: 120px;
-            resize: vertical;
+        .btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 14px 20px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 16px;
+            border: none;
+            cursor: pointer;
+            transition: var(--transition);
+            gap: 8px;
+            width: 100%;
         }
 
-        input:focus,
-        textarea:focus,
-        select:focus {
-            outline: none;
-            border-color: var(--tg-theme-button-color, #3390ec);
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
         }
 
-        .task-list {
-            margin-top: 10px;
+        .btn-secondary {
+            background: var(--tg-theme-secondary-bg-color, rgba(0, 0, 0, 0.05));
+            color: var(--primary-text);
+        }
+
+        .btn-outline {
+            background: transparent;
+            border: 1px solid var(--primary-color);
+            color: var(--primary-color);
+        }
+
+        .btn-danger {
+            background: var(--error-color);
+            color: white;
         }
 
         .task-item {
-            margin-bottom: 15px;
-            padding: 15px;
-            border: 1px solid var(--tg-theme-hint-color, #ddd);
-            border-radius: 8px;
-            background: var(--tg-theme-secondary-bg-color, #f5f5f5);
+            background: var(--bg-color);
+            border-radius: 10px;
+            padding: 16px;
+            margin-bottom: 12px;
+            position: relative;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
         }
 
-        .task-item textarea {
-            width: 100%;
-            margin-bottom: 10px;
-            min-height: 80px;
-        }
-
-        .task-additional-fields {
-            margin-top: 10px;
-        }
-
-        .task-additional-fields textarea {
-            min-height: 60px;
-            margin-bottom: 8px;
-            font-size: 14px;
-        }
-
-        .task-item-controls {
+        .btn-remove-task {
+            position: absolute;
+            top: -8px;
+            right: -8px;
+            width: 28px;
+            height: 28px;
+            background: var(--error-color);
+            color: white;
+            border-radius: 50%;
             display: flex;
-            gap: 8px;
             align-items: center;
-            flex-wrap: wrap;
+            justify-content: center;
+            font-size: 18px;
+            border: 3px solid var(--bg-color);
+            cursor: pointer;
+            z-index: 10;
         }
 
-        .task-hours,
-        .task-minutes {
-            width: 70px;
+        .switch-container {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+        }
+
+        .switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+
+        .switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        input:checked+.slider {
+            background-color: var(--accent-color);
+        }
+
+        input:checked+.slider:before {
+            transform: translateX(22px);
+        }
+
+        .stat-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: var(--secondary-bg);
+            padding: 16px;
+            border-radius: var(--border-radius);
             text-align: center;
         }
 
-        .time-separator {
+        .history-item {
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .history-details {
+            display: none;
+            padding: 12px;
+            margin-top: 8px;
+            border-top: 1px solid var(--input-border);
+            font-size: 13px;
+            animation: slideDown 0.2s ease;
+        }
+
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-5px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .history-task {
             display: flex;
+            gap: 8px;
+            margin-bottom: 6px;
+        }
+
+        .history-task:last-child {
+            margin-bottom: 0;
+        }
+
+        .user-item {
+            background: var(--bg-color);
+            padding: 16px;
+            border-radius: 12px;
+            margin-bottom: 12px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+            border: 1px solid rgba(0, 0, 0, 0.03);
+        }
+
+        .badge {
+            padding: 2px 8px;
+            border-radius: 10px;
+            font-size: 10px;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+
+        .badge-pending {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .badge-active {
+            background: var(--accent-color);
+            color: white;
+        }
+
+        .badge-blocked {
+            background: var(--error-color);
+            color: white;
+        }
+
+        .loading-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: var(--bg-color);
+            z-index: 2000;
+            display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
-            font-weight: bold;
-            color: var(--tg-theme-text-color);
-            width: 20px;
-            flex-shrink: 0;
         }
 
-        .task-item-controls select {
-            width: 150px;
-            flex-shrink: 0;
-        }
-
-        .btn-remove {
-            padding: 12px;
-            background: #ff3b30;
-            color: white;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 18px;
+        .spinner {
             width: 40px;
             height: 40px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            flex-shrink: 0;
+            border: 4px solid rgba(0, 122, 255, 0.1);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin-bottom: 16px;
         }
 
-        /* Адаптивні стилі для мобільних пристроїв */
-        @media (max-width: 480px) {
-
-            .task-hours,
-            .task-minutes {
-                width: 60px;
-                font-size: 14px;
-                padding: 10px 8px;
-            }
-
-            .task-item-controls select {
-                width: 120px;
-                font-size: 14px;
-                padding: 10px 8px;
-            }
-
-            .btn-remove {
-                width: 36px;
-                height: 36px;
-                padding: 8px;
-                font-size: 16px;
+        @keyframes spin {
+            to {
+                transform: rotate(360deg);
             }
         }
 
-        /* Для дуже маленьких екранів */
-        @media (max-width: 360px) {
-            .task-item-controls {
-                flex-direction: column;
-                align-items: stretch;
-            }
-
-            .task-hours,
-            .task-minutes,
-            .task-item-controls select {
-                width: 100%;
-            }
-
-            .time-separator {
-                display: none;
-            }
-
-            .btn-remove {
-                width: 100%;
-                height: 40px;
-            }
-        }
-
-        .btn-add {
-            padding: 10px 16px;
-            background: var(--tg-theme-button-color, #3390ec);
-            color: var(--tg-theme-button-text-color, #fff);
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 14px;
-            margin-top: 10px;
-        }
-
-        .error {
-            color: #ff3b30;
-            font-size: 14px;
-            margin-top: 5px;
+        /* Modal / Slide-up */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 3000;
             display: none;
+            align-items: flex-end;
         }
 
-        .success-message {
-            background: #34c759;
-            color: white;
-            padding: 15px;
-            border-radius: 8px;
-            margin-bottom: 20px;
-            display: none;
+        .modal-content {
+            background: var(--bg-color);
+            width: 100%;
+            border-radius: 20px 20px 0 0;
+            padding: 24px;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.3s ease;
+        }
+
+        @keyframes slideUp {
+            from {
+                transform: translateY(100%);
+            }
+
+            to {
+                transform: translateY(0);
+            }
         }
     </style>
 </head>
 
 <body>
-    <div class="container">
-        <h1>📝 Щоденний звіт</h1>
-        <div class="date" id="currentDate"></div>
+    <div id="loading" class="loading-overlay">
+        <div class="spinner"></div>
+        <div class="subtitle">Синхронізація...</div>
+    </div>
 
-        <div class="success-message" id="successMessage">
-            ✅ Звіт успішно відправлено!
+    <div class="container">
+        <!-- Tab: Report -->
+        <div id="tab-report" class="tab-content active">
+            <header>
+                <h1>Звіт</h1>
+                <div class="subtitle" id="current-date">Завантаження дати...</div>
+            </header>
+            <form id="report-form">
+                <div id="task-list"></div>
+                <button type="button" class="btn btn-outline" style="margin-bottom: 20px;" onclick="addTask()">
+                    + Додати завдання
+                </button>
+            </form>
         </div>
 
-        <form id="reportForm">
-            <div class="form-group">
-                <label for="tasks">Виконані завдання *</label>
-                <div class="task-list" id="taskList">
-                    <div class="task-item">
-                        <textarea class="task-input" placeholder="Опишіть завдання..." required></textarea>
-                        <div class="task-item-controls">
-                            <input type="number" class="task-hours" min="0" max="24" placeholder="Год" required>
-                            <div class="time-separator">:</div>
-                            <input type="number" class="task-minutes" min="0" max="59" placeholder="Хв" required>
-                            <select class="task-status" required>
-                                <option value="completed">✅ Виконано</option>
-                                <option value="in_progress">🔄 В процесі</option>
-                                <option value="blocked">🚫 Блокери</option>
-                            </select>
-                            <button type="button" class="btn-remove" onclick="removeTask(this)"
-                                title="Видалити">×</button>
+        <!-- Tab: History -->
+        <div id="tab-history" class="tab-content">
+            <header>
+                <h1>Історія</h1>
+                <div class="subtitle">Попередні звіти</div>
+            </header>
+            <div id="history-list"></div>
+        </div>
+
+        <!-- Tab: Stats -->
+        <div id="tab-stats" class="tab-content">
+            <header>
+                <h1>Статистика</h1>
+                <div class="subtitle">Ваш прогрес за місяць</div>
+            </header>
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-total-reports">0</div>
+                    <div class="stat-label">Звітів</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="stat-total-hours">0</div>
+                    <div class="stat-label">Годин</div>
+                </div>
+            </div>
+            <div class="card">
+                <h3 style="margin-bottom: 12px; font-size: 16px;">Топ завдань</h3>
+                <div id="top-tasks-list"></div>
+            </div>
+        </div>
+
+        <!-- Tab: Settings -->
+        <div id="tab-settings" class="tab-content">
+            <header>
+                <h1>Налаштування</h1>
+                <div class="subtitle">Керування профілем</div>
+            </header>
+
+            <div class="card">
+                <label>Сповіщення</label>
+                <div class="switch-container">
+                    <span>Час нагадування</span>
+                    <input type="time" id="set-time" style="width: 100px;">
+                </div>
+                <div class="switch-container">
+                    <span>Формат звіту</span>
+                    <select id="set-format" style="width: 120px;">
+                        <option value="email">Як лист</option>
+                        <option value="detailed">Детальний</option>
+                    </select>
+                </div>
+                <div class="switch-container">
+                    <div>
+                        <div style="font-weight: 600;">Нагадування після роботи</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="set-daily-reminders">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="switch-container"
+                    style="border-bottom: 1px solid rgba(0,0,0,0.05); padding-bottom: 10px; margin-bottom: 10px;">
+                    <div>
+                        <div style="font-weight: 600;">Робочий час</div>
+                    </div>
+                    <label class="switch">
+                        <input type="checkbox" id="set-workday-reminders" onchange="toggleWorkdayDetails(this.checked)">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+                <div id="workday-settings-detail">
+                    <div class="stat-grid">
+                        <div class="form-group">
+                            <label>З</label>
+                            <input type="time" id="set-workday-start">
                         </div>
-                        <div class="task-additional-fields">
-                            <textarea class="task-blockers"
-                                placeholder="Проблеми/Блокери для цього завдання (необов'язково)"></textarea>
-                            <textarea class="task-plans"
-                                placeholder="Плани для цього завдання (необов'язково)"></textarea>
-                            <textarea class="task-notes"
-                                placeholder="Додаткові нотатки для цього завдання (необов'язково)"></textarea>
+                        <div class="form-group">
+                            <label>До</label>
+                            <input type="time" id="set-workday-end">
                         </div>
                     </div>
+                    <div class="form-group">
+                        <label>Інтервал (години)</label>
+                        <input type="number" id="set-workday-interval" min="1" max="8">
+                    </div>
                 </div>
-                <button type="button" class="btn-add" onclick="addTask()">+ Додати завдання</button>
-                <div class="error" id="tasksError">Додайте хоча б одне завдання</div>
             </div>
-        </form>
+
+            <div class="card">
+                <label>Odoo Інтеграція</label>
+                <div class="form-group">
+                    <label>Логін Odoo</label>
+                    <input type="text" id="odoo-username" placeholder="v.pupkin">
+                </div>
+                <div class="form-group">
+                    <label>Пароль Odoo</label>
+                    <input type="password" id="odoo-password" placeholder="••••••••">
+                </div>
+            </div>
+
+            <button class="btn btn-primary" onclick="saveSettings()">Зберегти всі налаштування</button>
+        </div>
+
+        <!-- Tab: Admin -->
+        <div id="tab-admin" class="tab-content">
+            <header>
+                <h1>Адмін-панель</h1>
+                <div class="subtitle">Керування системою</div>
+            </header>
+
+            <div class="stat-grid">
+                <div class="stat-card">
+                    <div class="stat-value" id="admin-total-users">0</div>
+                    <div class="stat-label">Користувачів</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="admin-pending-users">0</div>
+                    <div class="stat-label">Очікують</div>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>Користувачі</label>
+                <input type="text" placeholder="Пошук за ім'ям..." id="admin-user-search" oninput="filterUsers()">
+            </div>
+
+            <div id="admin-user-list"></div>
+
+            <div class="card" style="margin-top: 24px;">
+                <label>Повідомлення</label>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button class="btn btn-primary" onclick="openMessageModal('all')">📢 Надіслати повідомлення
+                        всім</button>
+                </div>
+            </div>
+
+            <div class="card" style="margin-top: 24px;">
+                <label>Експорт та сервіси</label>
+                <div style="display: flex; flex-direction: column; gap: 10px;">
+                    <button class="btn btn-secondary" onclick="adminAction('export_all')">📊 Експорт в Excel</button>
+                    <button class="btn btn-danger" onclick="adminAction('clear_reports')">🗑️ Очистити базу
+                        звітів</button>
+                </div>
+            </div>
+        </div>
     </div>
+
+    <!-- Admin User Modal -->
+    <div id="user-modal" class="modal" onclick="closeModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 id="modal-user-name">Керування користувачем</h2>
+                <button onclick="closeModal()"
+                    style="background: none; border: none; font-size: 24px; cursor: pointer;">×</button>
+            </div>
+
+            <div id="admin-odoo-config" class="card">
+                <label>Odoo Налаштування для юзера</label>
+                <div class="form-group">
+                    <label>URL</label>
+                    <input type="text" id="admin-odoo-url" placeholder="https://erp.antenor.io">
+                </div>
+                <div class="form-group">
+                    <label>Database</label>
+                    <input type="text" id="admin-odoo-db" placeholder="odoo-db">
+                </div>
+                <div class="form-group">
+                    <label>Username</label>
+                    <input type="text" id="admin-odoo-user">
+                </div>
+                <div class="form-group">
+                    <label>Password</label>
+                    <input type="password" id="admin-odoo-pass">
+                </div>
+                <div class="form-group">
+                    <label>Task ID (optional)</label>
+                    <input type="number" id="admin-odoo-task">
+                </div>
+                <button class="btn btn-outline" onclick="saveAdminOdoo()">Оновити Odoo</button>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button id="btn-approve" class="btn btn-primary"
+                    onclick="adminUserAction('approve')">Підтвердити</button>
+                <button id="btn-block" class="btn btn-danger" onclick="adminUserAction('block')">Блокувати</button>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 10px;">
+                <button class="btn btn-secondary" onclick="openMessageModal('single')">📨 Надіслати
+                    повідомлення</button>
+                <button class="btn btn-secondary" onclick="openUserReportsModal()">📋 Переглянути звіти</button>
+            </div>
+            <button id="btn-rename" class="btn btn-secondary" style="margin-top: 10px;"
+                onclick="adminUserRename()">Перейменувати</button>
+        </div>
+    </div>
+
+    <!-- Message Modal -->
+    <div id="message-modal" class="modal" onclick="closeMessageModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 id="message-modal-title">Надіслати повідомлення</h2>
+                <button onclick="closeMessageModal()"
+                    style="background: none; border: none; font-size: 24px; cursor: pointer;">×</button>
+            </div>
+
+            <div class="form-group">
+                <label id="message-recipient-label">Отримувач</label>
+                <input type="text" id="message-subject" placeholder="Тема (необов'язково)" style="margin-bottom: 12px;">
+                <textarea id="message-text" rows="6" placeholder="Введіть текст повідомлення..." style="width: 100%; padding: 12px; border: 1px solid var(--input-border); 
+                    border-radius: var(--border-radius); font-family: inherit; font-size: 14px;
+                    resize: vertical; min-height: 120px;"></textarea>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-primary" onclick="sendMessage()">📤 Надіслати</button>
+                <button class="btn btn-secondary" onclick="closeMessageModal()">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Reports Modal -->
+    <div id="reports-modal" class="modal" onclick="closeReportsModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-height: 80vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 id="reports-modal-title">Звіти користувача</h2>
+                <button onclick="closeReportsModal()"
+                    style="background: none; border: none; font-size: 24px; cursor: pointer;">×</button>
+            </div>
+
+            <div class="form-group">
+                <input type="text" placeholder="Пошук за датою або текстом..." id="reports-search"
+                    oninput="filterReports()" style="width: 100%;">
+            </div>
+
+            <div id="reports-list" style="display: flex; flex-direction: column; gap: 12px;">
+                <!-- Reports will be loaded here -->
+            </div>
+
+            <div style="margin-top: 20px;">
+                <button class="btn btn-secondary" onclick="closeReportsModal()">Закрити</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Report Modal -->
+    <div id="edit-report-modal" class="modal" onclick="closeEditReportModal(event)">
+        <div class="modal-content" onclick="event.stopPropagation()" style="max-height: 80vh; overflow-y: auto;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2>Редагувати звіт</h2>
+                <button onclick="closeEditReportModal()"
+                    style="background: none; border: none; font-size: 24px; cursor: pointer;">×</button>
+            </div>
+
+            <div class="form-group">
+                <label>Дата</label>
+                <input type="date" id="edit-report-date" style="width: 100%;">
+            </div>
+
+            <div class="form-group">
+                <label>Завдання</label>
+                <div id="edit-report-tasks" style="display: flex; flex-direction: column; gap: 12px;">
+                    <!-- Tasks will be loaded here -->
+                </div>
+                <button type="button" class="btn btn-outline" style="margin-top: 12px; font-size: 14px;"
+                    onclick="addEditTask()">
+                    + Додати завдання
+                </button>
+            </div>
+
+            <div style="display: flex; gap: 10px; margin-top: 20px;">
+                <button class="btn btn-primary" onclick="saveEditedReport()">💾 Зберегти</button>
+                <button class="btn btn-danger" onclick="deleteReport()">🗑️ Видалити звіт</button>
+                <button class="btn btn-secondary" onclick="closeEditReportModal()">Скасувати</button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="bottom-nav">
+        <a href="#" class="nav-item active" onclick="switchTab('report')">
+            <span class="nav-icon">📝</span>
+            <span>Звіт</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchTab('history')">
+            <span class="nav-icon">🕒</span>
+            <span>Історія</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchTab('stats')">
+            <span class="nav-icon">📊</span>
+            <span>Стат</span>
+        </a>
+        <a href="#" class="nav-item" onclick="switchTab('settings')">
+            <span class="nav-icon">⚙️</span>
+            <span>Параметри</span>
+        </a>
+        <a href="#" id="nav-admin" class="nav-item" style="display: none;" onclick="switchTab('admin')">
+            <span class="nav-icon">🔐</span>
+            <span>Адмін</span>
+        </a>
+    </nav>
 
     <script>
         const tg = window.Telegram.WebApp;
         tg.expand();
+        tg.enableClosingConfirmation();
 
-        // Встановлюємо поточну дату
-        const dateOptions = { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' };
-        document.getElementById('currentDate').textContent =
-            new Date().toLocaleDateString('uk-UA', dateOptions);
+        let state = {
+            isAdmin: false,
+            currentUserId: null,
+            managingUserId: null,
+            tasks: [{ id: Date.now(), text: '', hours: '', minutes: '', status: 'completed' }],
+            users: [],
+            messageType: 'all',
+            userReports: [],
+            editingReportId: null
+        };
 
-        // Додавання нового завдання
+        function updateDate() {
+            const options = { weekday: 'long', day: 'numeric', month: 'long' };
+            document.getElementById('current-date').textContent = new Date().toLocaleDateString('uk-UA', options);
+        }
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+            document.getElementById(`tab-${tabId}`).classList.add('active');
+
+            const navItems = document.querySelectorAll('.nav-item');
+            const idx = { report: 0, history: 1, stats: 2, settings: 3, admin: 4 };
+            navItems[idx[tabId]].classList.add('active');
+
+            if (tabId === 'report') tg.MainButton.show();
+            else tg.MainButton.hide();
+        }
+
+        function toggleWorkdayDetails(show) {
+            document.getElementById('workday-settings-detail').style.display = show ? 'block' : 'none';
+        }
+
         function addTask() {
-            const taskList = document.getElementById('taskList');
-            const taskItem = document.createElement('div');
-            taskItem.className = 'task-item';
-            taskItem.innerHTML = `
-                <textarea class="task-input" placeholder="Опишіть завдання..." required></textarea>
-                <div class="task-item-controls">
-                    <input type="number" class="task-hours" min="0" max="24" placeholder="Год" required>
-                    <div class="time-separator">:</div>
-                    <input type="number" class="task-minutes" min="0" max="59" placeholder="Хв" required>
-                    <select class="task-status" required>
-                        <option value="completed">✅ Виконано</option>
-                        <option value="in_progress">🔄 В процесі</option>
-                        <option value="blocked">🚫 Блокери</option>
-                    </select>
-                    <button type="button" class="btn-remove" onclick="removeTask(this)" title="Видалити">×</button>
-                </div>
-                <div class="task-additional-fields">
-                    <textarea class="task-blockers" placeholder="Проблеми/Блокери для цього завдання (необов'язково)"></textarea>
-                    <textarea class="task-plans" placeholder="Плани для цього завдання (необов'язково)"></textarea>
-                    <textarea class="task-notes" placeholder="Додаткові нотатки для цього завдання (необов'язково)"></textarea>
-                </div>
-            `;
-            taskList.appendChild(taskItem);
+            state.tasks.push({ id: Date.now(), text: '', hours: '', minutes: '', status: 'completed' });
+            renderTasks();
         }
 
-        // Видалення завдання
-        function removeTask(button) {
-            const taskList = document.getElementById('taskList');
-            if (taskList.children.length > 1) {
-                const taskItem = button.closest('.task-item');
-                if (taskItem) {
-                    taskItem.remove();
-                }
+        function removeTask(id) {
+            if (state.tasks.length > 1) {
+                state.tasks = state.tasks.filter(t => t.id !== id);
+                renderTasks();
+            }
+        }
+
+        function renderTasks() {
+            const list = document.getElementById('task-list');
+            list.innerHTML = '';
+            state.tasks.forEach(task => {
+                const div = document.createElement('div');
+                div.className = 'task-item';
+                div.innerHTML = `
+                    <button type="button" class="btn-remove-task" onclick="removeTask(${task.id})">×</button>
+                    <textarea placeholder="Опишіть завдання..." oninput="updateTask(${task.id}, 'text', this.value)">${task.text}</textarea>
+                    <div style="display: flex; gap: 10px; margin-top: 12px;">
+                        <input type="number" placeholder="Год" style="width: 70px;" value="${task.hours}" oninput="updateTask(${task.id}, 'hours', this.value)">
+                        <input type="number" placeholder="Хв" style="width: 70px;" value="${task.minutes}" oninput="updateTask(${task.id}, 'minutes', this.value)">
+                        <select style="flex: 1;" onchange="updateTask(${task.id}, 'status', this.value)">
+                            <option value="completed" ${task.status === 'completed' ? 'selected' : ''}>✅ Виконано</option>
+                            <option value="in_progress" ${task.status === 'in_progress' ? 'selected' : ''}>🔄 У процесі</option>
+                            <option value="blocked" ${task.status === 'blocked' ? 'selected' : ''}>🚫 Блокери</option>
+                        </select>
+                    </div>
+                `;
+                list.appendChild(div);
+            });
+            updateMainButton();
+        }
+
+        function updateTask(id, field, value) {
+            const task = state.tasks.find(t => t.id === id);
+            if (task) { task[field] = value; updateMainButton(); }
+        }
+
+        function updateMainButton() {
+            const isValid = state.tasks.some(t => t.text.trim().length > 2 && (parseInt(t.hours) > 0 || parseInt(t.minutes) > 0));
+            if (isValid) {
+                tg.MainButton.enable();
+                tg.MainButton.setParams({ color: '#34c759' });
             } else {
-                alert('Має бути хоча б одне завдання');
+                tg.MainButton.disable();
+                tg.MainButton.setParams({ color: '#8e8e93' });
             }
         }
 
-        // Валідація форми
-        function validateForm() {
-            let isValid = true;
-            const taskItems = document.querySelectorAll('.task-item');
-            let hasValidTask = false;
-
-            for (const item of taskItems) {
-                const input = item.querySelector('.task-input');
-                const hoursEl = item.querySelector('.task-hours');
-                const minutesEl = item.querySelector('.task-minutes');
-                const status = item.querySelector('.task-status');
-
-                const taskText = input?.value.trim() || '';
-                const hours = hoursEl?.value !== '' ? parseInt(hoursEl.value, 10) : NaN;
-                const minutes = minutesEl?.value !== '' ? parseInt(minutesEl.value, 10) : NaN;
-                const statusValue = status?.value || '';
-
-                const validHours = !isNaN(hours) && hours >= 0 && hours <= 24;
-                const validMinutes = !isNaN(minutes) && minutes >= 0 && minutes <= 59;
-                const totalTimeMinutes = (validHours ? hours : 0) * 60 + (validMinutes ? minutes : 0);
-
-                if (taskText && statusValue && totalTimeMinutes > 0) {
-                    hasValidTask = true;
-                    break;
-                }
-            }
-
-            if (!hasValidTask) {
-                document.getElementById('tasksError').style.display = 'block';
-                isValid = false;
-            } else {
-                document.getElementById('tasksError').style.display = 'none';
-            }
-
-            return isValid;
-        }
-
-        // Збір даних форми
-        function collectFormData() {
-            const tasks = Array.from(document.querySelectorAll('.task-item')).map(item => {
-                const textarea = item.querySelector('.task-input');
-                const hoursEl = item.querySelector('.task-hours');
-                const minutesEl = item.querySelector('.task-minutes');
-                const status = item.querySelector('.task-status');
-                const blockersEl = item.querySelector('.task-blockers');
-                const plansEl = item.querySelector('.task-plans');
-                const notesEl = item.querySelector('.task-notes');
-
-                const taskText = textarea?.value.trim() || '';
-                const hours = hoursEl?.value !== '' ? parseInt(hoursEl.value, 10) : 0;
-                const minutes = minutesEl?.value !== '' ? parseInt(minutesEl.value, 10) : 0;
-                const statusValue = status?.value || 'completed';
-                const blockers = blockersEl?.value.trim() || '';
-                const plans = plansEl?.value.trim() || '';
-                const notes = notesEl?.value.trim() || '';
-
-                const totalMinutes = hours * 60 + minutes;
-                if (!taskText || totalMinutes === 0) return null;
-
-                // Зберігаємо години та хвилини окремо, а також додаткові поля
-                return {
-                    task: taskText,
-                    hours: hours,
-                    minutes: minutes,
-                    status: statusValue,
-                    blockers: blockers,
-                    plans: plans,
-                    notes: notes
-                };
-            }).filter(task => task !== null);
-
-            return {
-                date: new Date().toISOString().split('T')[0],
-                tasks: tasks,
-                timestamp: new Date().toISOString()
+        function saveSettings() {
+            const data = {
+                action: 'save_settings_v3',
+                reminder_time: document.getElementById('set-time').value,
+                report_format: document.getElementById('set-format').value,
+                daily_reminders: document.getElementById('set-daily-reminders').checked,
+                workday_reminders: document.getElementById('set-workday-reminders').checked,
+                workday_start: document.getElementById('set-workday-start').value,
+                workday_end: document.getElementById('set-workday-end').value,
+                workday_interval: document.getElementById('set-workday-interval').value,
+                odoo_user: document.getElementById('odoo-username').value,
+                odoo_pass: document.getElementById('odoo-password').value
             };
+            tg.sendData(JSON.stringify(data));
         }
 
-        // Головна кнопка Telegram
-        tg.MainButton.setText('Відправити звіт');
-        tg.MainButton.show();
-        tg.MainButton.onClick(() => {
-            if (validateForm()) {
-                const data = collectFormData();
-                console.log('Відправка даних:', data);
-                console.log('JSON дані:', JSON.stringify(data));
+        function submitReport() {
+            const reportData = {
+                action: 'create_report',
+                tasks: state.tasks.filter(t => t.text.trim() !== '').map(t => ({
+                    task: t.text, hours: parseInt(t.hours) || 0, minutes: parseInt(t.minutes) || 0, status: t.status
+                }))
+            };
+            tg.sendData(JSON.stringify(reportData));
+        }
 
+        // Admin Functions
+        function openUserModal(userId) {
+            const user = state.users.find(u => u.id == userId);
+            if (!user) return;
+            state.managingUserId = userId;
+            document.getElementById('modal-user-name').textContent = user.username || 'Користувач ' + userId;
+            document.getElementById('user-modal').style.display = 'flex';
+
+            // Populate Odoo fields if user data has them
+            document.getElementById('admin-odoo-url').value = user.odoo_url || '';
+            document.getElementById('admin-odoo-db').value = user.odoo_db || '';
+            document.getElementById('admin-odoo-user').value = user.odoo_username || '';
+            document.getElementById('admin-odoo-pass').value = user.odoo_password || '';
+            document.getElementById('admin-odoo-task').value = user.odoo_task_id || '';
+        }
+
+        function closeModal(e) {
+            document.getElementById('user-modal').style.display = 'none';
+        }
+
+        function saveAdminOdoo() {
+            const data = {
+                action: 'admin_v2',
+                type: 'save_odoo_admin_settings',
+                user_id: state.managingUserId,
+                url: document.getElementById('admin-odoo-url').value,
+                db: document.getElementById('admin-odoo-db').value,
+                username: document.getElementById('admin-odoo-user').value,
+                password: document.getElementById('admin-odoo-pass').value,
+                task_id: document.getElementById('admin-odoo-task').value
+            };
+            tg.sendData(JSON.stringify(data));
+        }
+
+        function adminUserAction(type) {
+            tg.sendData(JSON.stringify({
+                action: 'admin_v2',
+                type: type + '_user',
+                user_id: state.managingUserId
+            }));
+            closeModal();
+        }
+
+        function adminUserRename() {
+            const newName = prompt('Введіть нове ім\'я користувача:');
+            if (newName && newName.trim()) {
+                tg.sendData(JSON.stringify({
+                    action: 'admin_v2',
+                    type: 'rename_user',
+                    user_id: state.managingUserId,
+                    new_name: newName.trim()
+                }));
+                closeModal();
+            }
+        }
+
+        function adminAction(type) {
+            tg.sendData(JSON.stringify({ action: 'admin_v2', type: type }));
+        }
+
+        // Message Functions
+        function openMessageModal(type) {
+            const modal = document.getElementById('message-modal');
+            const title = document.getElementById('message-modal-title');
+            const label = document.getElementById('message-recipient-label');
+
+            if (type === 'all') {
+                state.messageType = 'all';
+                title.textContent = 'Надіслати повідомлення всім';
+                label.textContent = 'Отримувачі: Всі користувачі';
+            } else {
+                state.messageType = 'single';
+                const user = state.users.find(u => u.id == state.managingUserId);
+                title.textContent = 'Надіслати повідомлення';
+                label.textContent = `Отримувач: ${user?.username || 'ID: ' + state.managingUserId}`;
+            }
+
+            document.getElementById('message-text').value = '';
+            document.getElementById('message-subject').value = '';
+            modal.style.display = 'flex';
+        }
+
+        function closeMessageModal(e) {
+            document.getElementById('message-modal').style.display = 'none';
+        }
+
+        function sendMessage() {
+            const subject = document.getElementById('message-subject').value.trim();
+            const text = document.getElementById('message-text').value.trim();
+            if (!text) {
+                alert('Введіть текст повідомлення');
+                return;
+            }
+
+            const data = {
+                action: 'admin_v2',
+                type: state.messageType === 'all' ? 'send_message_all' : 'send_message_user',
+                subject: subject,
+                message: text
+            };
+
+            if (state.messageType === 'single') {
+                data.user_id = state.managingUserId;
+            }
+
+            tg.sendData(JSON.stringify(data));
+            closeMessageModal();
+        }
+
+        // Reports Functions
+        function openUserReportsModal() {
+            const modal = document.getElementById('reports-modal');
+            const title = document.getElementById('reports-modal-title');
+            const user = state.users.find(u => u.id == state.managingUserId);
+
+            title.textContent = `Звіти: ${user?.username || 'ID: ' + state.managingUserId}`;
+
+            // Request user reports from bot
+            tg.sendData(JSON.stringify({
+                action: 'admin_v2',
+                type: 'get_user_reports',
+                user_id: state.managingUserId
+            }));
+
+            modal.style.display = 'flex';
+        }
+
+        function closeReportsModal(e) {
+            document.getElementById('reports-modal').style.display = 'none';
+        }
+
+        function loadUserReports(reports) {
+            state.userReports = reports;
+            renderReportsList(reports);
+        }
+
+        function renderReportsList(reports) {
+            const list = document.getElementById('reports-list');
+            if (!reports || reports.length === 0) {
+                list.innerHTML = '<div class="subtitle" style="text-align:center; padding: 20px;">Звітів немає</div>';
+                return;
+            }
+
+            list.innerHTML = reports.map(report => `
+                <div class="card" onclick="openEditReportModal(${report.id})" 
+                    style="cursor: pointer; transition: var(--transition);">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; margin-bottom: 4px;">${report.date}</div>
+                            <div class="subtitle">${report.tasks_count || 0} завдань • ${report.total_hours || '0:00'} год</div>
+                            ${report.tasks ? `
+                                <div style="margin-top: 8px; font-size: 13px;">
+                                    ${report.tasks.slice(0, 2).map(t =>
+                `<div style="color: var(--secondary-text);">• ${t.text || 'Без назви'}</div>`
+            ).join('')}
+                                    ${report.tasks.length > 2 ? `<div style="color: var(--secondary-text);">... та ще ${report.tasks.length - 2}</div>` : ''}
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div style="margin-left: 12px;">
+                            <span style="font-size: 20px;">📝</span>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterReports() {
+            const query = document.getElementById('reports-search').value.toLowerCase();
+            if (!state.userReports) return;
+
+            const filtered = state.userReports.filter(report => {
+                const dateMatch = report.date?.toLowerCase().includes(query);
+                const tasksMatch = report.tasks?.some(t => t.text?.toLowerCase().includes(query));
+                return dateMatch || tasksMatch;
+            });
+
+            renderReportsList(filtered);
+        }
+
+        function renderEditTasks(tasks) {
+            const tasksContainer = document.getElementById('edit-report-tasks');
+            if (tasks && tasks.length > 0) {
+                tasksContainer.innerHTML = tasks.map((task, idx) => `
+                    <div class="task-item" style="margin-bottom: 0;">
+                        <button type="button" class="btn-remove-task" onclick="removeEditTask(${idx})">×</button>
+                        <textarea placeholder="Опишіть завдання..." 
+                            oninput="updateEditTask(${idx}, 'text', this.value)">${task.text || ''}</textarea>
+                        <div style="display: flex; gap: 10px; margin-top: 12px;">
+                            <input type="number" placeholder="Год" style="width: 70px;" 
+                                value="${task.hours || 0}" oninput="updateEditTask(${idx}, 'hours', this.value)">
+                            <input type="number" placeholder="Хв" style="width: 70px;" 
+                                value="${task.minutes || 0}" oninput="updateEditTask(${idx}, 'minutes', this.value)">
+                            <select style="flex: 1;" onchange="updateEditTask(${idx}, 'status', this.value)">
+                                <option value="completed" ${task.status === 'completed' ? 'selected' : ''}>✅ Виконано</option>
+                                <option value="in_progress" ${task.status === 'in_progress' ? 'selected' : ''}>🔄 У процесі</option>
+                                <option value="blocked" ${task.status === 'blocked' ? 'selected' : ''}>🚫 Блокери</option>
+                            </select>
+                        </div>
+                    </div>
+                `).join('');
+            } else {
+                tasksContainer.innerHTML = '<div class="subtitle">Немає завдань</div>';
+            }
+        }
+
+        function addEditTask() {
+            state.editingTasks.push({ text: '', hours: 0, minutes: 0, status: 'completed' });
+            renderEditTasks(state.editingTasks);
+        }
+
+        function removeEditTask(idx) {
+            state.editingTasks.splice(idx, 1);
+            renderEditTasks(state.editingTasks);
+        }
+
+        function updateEditTask(idx, field, value) {
+            state.editingTasks[idx][field] = value;
+        }
+
+        function openEditReportModal(reportId) {
+            const report = state.userReports.find(r => r.id === reportId);
+            if (!report) return;
+
+            state.editingReportId = reportId;
+            state.editingTasks = JSON.parse(JSON.stringify(report.tasks || []));
+
+            document.getElementById('edit-report-date').value = report.date || '';
+            renderEditTasks(state.editingTasks);
+
+            document.getElementById('edit-report-modal').style.display = 'flex';
+        }
+
+        function closeEditReportModal(e) {
+            document.getElementById('edit-report-modal').style.display = 'none';
+        }
+
+        function saveEditedReport() {
+            const report = state.userReports.find(r => r.id === state.editingReportId);
+            if (!report) return;
+
+            const date = document.getElementById('edit-report-date').value;
+            const tasks = state.editingTasks.map(t => ({
+                text: t.text,
+                hours: parseInt(t.hours) || 0,
+                minutes: parseInt(t.minutes) || 0,
+                status: t.status
+            }));
+
+            tg.sendData(JSON.stringify({
+                action: 'admin_v2',
+                type: 'edit_user_report',
+                user_id: state.managingUserId,
+                report_id: state.editingReportId,
+                date: date,
+                tasks: tasks
+            }));
+
+            closeEditReportModal();
+        }
+
+        function deleteReport() {
+            if (!confirm('Ви впевнені, що хочете видалити цей звіт?')) return;
+
+            tg.sendData(JSON.stringify({
+                action: 'admin_v2',
+                type: 'delete_user_report',
+                user_id: state.managingUserId,
+                report_id: state.editingReportId
+            }));
+
+            closeEditReportModal();
+            closeReportsModal();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            tg.ready();
+            updateDate();
+            renderTasks();
+            tg.MainButton.setText('Надіслати звіт');
+            tg.MainButton.onClick(submitReport);
+
+            // Force "report" tab state on load
+            switchTab('report');
+
+            // Initialization via URL data
+            const urlParams = new URLSearchParams(window.location.search);
+            const rawData = urlParams.get('data');
+            if (rawData) {
                 try {
-                    tg.sendData(JSON.stringify(data));
-                    tg.close();
-                } catch (error) {
-                    console.error('Помилка відправки даних:', error);
-                    alert('Помилка відправки звіту: ' + error.message);
+                    const initData = JSON.parse(decodeURIComponent(rawData));
+                    console.log('Ініціалізація даними:', initData);
+
+                    state.isAdmin = initData.is_admin;
+                    state.settings = initData.settings;
+                    state.users = initData.admin?.users_list || [];
+
+                    // Update UI
+                    if (state.isAdmin) {
+                        document.getElementById('nav-admin').style.display = 'flex';
+                        document.getElementById('admin-total-users').textContent = initData.admin.total_users;
+                        document.getElementById('admin-pending-users').textContent = initData.admin.pending_users;
+                        renderUserList(state.users);
+                    }
+
+                    // Update Settings Tab
+                    document.getElementById('set-time').value = state.settings.reminder_time;
+                    document.getElementById('set-format').value = state.settings.report_format;
+                    document.getElementById('set-daily-reminders').checked = state.settings.daily_reminders;
+                    document.getElementById('set-workday-reminders').checked = state.settings.workday_reminders;
+                    document.getElementById('set-workday-start').value = state.settings.workday_start;
+                    document.getElementById('set-workday-end').value = state.settings.workday_end;
+                    document.getElementById('set-workday-interval').value = state.settings.workday_interval;
+                    document.getElementById('odoo-username').value = state.settings.odoo.username;
+
+                    toggleWorkdayDetails(state.settings.workday_reminders);
+
+                    // Update Stats
+                    document.getElementById('stat-total-reports').textContent = initData.stats.total_reports;
+                    document.getElementById('stat-total-hours').textContent = initData.stats.total_hours;
+
+                    // Update History
+                    renderHistory(initData.history);
+
+                } catch (e) {
+                    console.error('Помилка парсингу init data:', e);
                 }
             }
+
+            setTimeout(() => {
+                document.getElementById('loading').style.display = 'none';
+            }, 800);
         });
 
-        // Анімація кнопки при введенні
-        document.getElementById('reportForm').addEventListener('input', () => {
-            if (validateForm()) {
-                tg.MainButton.color = '#34c759';
-            } else {
-                tg.MainButton.color = tg.themeParams.button_color || '#3390ec';
+        function renderHistory(history) {
+            const list = document.getElementById('history-list');
+            if (!history || history.length === 0) {
+                list.innerHTML = '<div class="subtitle" style="text-align:center; padding: 20px;">Історія порожня</div>';
+                return;
             }
-        });
+            list.innerHTML = history.map((item, idx) => {
+                const tasksHtml = (item.tasks || []).map(t => {
+                    const taskText = t.t || '';
+                    const emoji = t.s === 'completed' ? '✅' : (t.s === 'blocked' ? '🚫' : '🔄');
+                    const time = (t.h || t.m) ? ` (${t.h || 0}г ${t.m || 0}хв)` : '';
+                    return `<div class="history-task"><span>${emoji}</span><span>${taskText}${time}</span></div>`;
+                }).join('');
+
+                return `
+                <div class="card history-item" onclick="toggleHistory(${idx})">
+                    <div style="display:flex; justify-content:space-between; align-items:center; width: 100%;">
+                        <div>
+                            <div style="font-weight:600;">${item.date}</div>
+                            <div class="subtitle">${item.tasks_count} завдань</div>
+                        </div>
+                        <div style="text-align: right;">
+                            <div style="font-weight:700; color:var(--primary-color);">${item.hours} год</div>
+                            <div style="font-size: 10px; color: var(--secondary-text);">Детальніше ▾</div>
+                        </div>
+                    </div>
+                    <div id="history-details-${idx}" class="history-details">
+                        ${tasksHtml || '<div class="subtitle">Дані відсутні</div>'}
+                    </div>
+                </div>
+            `}).join('');
+        }
+
+        function toggleHistory(idx) {
+            const el = document.getElementById(`history-details-${idx}`);
+            const isVisible = el.style.display === 'block';
+            el.style.display = isVisible ? 'none' : 'block';
+        }
+
+        function renderUserList(users) {
+            const list = document.getElementById('admin-user-list');
+            list.innerHTML = users.map(user => `
+                <div class="user-item" onclick="openUserModal(${user.id})">
+                    <div>
+                        <div style="font-weight:600;">${user.username || 'ID: ' + user.id}</div>
+                        <div class="subtitle">ID: ${user.id}</div>
+                    </div>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        ${user.odoo_username ? '<span>💼</span>' : ''}
+                        <span class="badge ${user.active ? 'badge-active' : 'badge-blocked'}">
+                            ${user.active ? 'Активний' : 'Заблокований'}
+                        </span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function filterUsers() {
+            const q = document.getElementById('admin-user-search').value.toLowerCase();
+            const filtered = state.users.filter(u =>
+                (u.username || '').toLowerCase().includes(q) ||
+                u.id.toString().includes(q)
+            );
+            renderUserList(filtered);
+        }
     </script>
 </body>
 

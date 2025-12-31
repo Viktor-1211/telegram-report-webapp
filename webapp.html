@@ -1110,6 +1110,9 @@
         }
 
         function deleteReport() {
+            // Debug: check values
+            // alert(`Debug: User ${state.managingUserId}, Report ${state.editingReportId}`); // Commented out to be less annoying
+
             if (!confirm('Ви впевнені, що хочете видалити цей звіт?')) return;
 
             if (!state.managingUserId || !state.editingReportId) {
@@ -1117,13 +1120,20 @@
                 return;
             }
 
-            tg.sendData(JSON.stringify({
-                action: 'admin_v2',
-                type: 'delete_user_report',
-                user_id: parseInt(state.managingUserId),
-                report_id: parseInt(state.editingReportId)
-            }));
+            try {
+                const data = JSON.stringify({
+                    action: 'admin_v2',
+                    type: 'delete_user_report',
+                    user_id: parseInt(state.managingUserId),
+                    report_id: parseInt(state.editingReportId)
+                });
+                tg.sendData(data);
+                // tg.close(); // sendData should close it, but acts as backup
+            } catch (e) {
+                alert('Помилка відправки: ' + e.message);
+            }
 
+            // UI cleanup just in case app doesn't close immediately (though it should)
             closeEditReportModal();
             closeReportsModal();
         }

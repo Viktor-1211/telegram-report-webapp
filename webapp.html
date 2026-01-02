@@ -857,13 +857,14 @@
             // Показуємо модалку відразу з базовими даними
             document.getElementById('modal-user-name').textContent = user.username || user.first_name || 'Користувач ' + userId;
             document.getElementById('user-modal').style.display = 'flex';
-            
+
             // Показуємо індикатор завантаження
             showLoadingInModal('user-modal');
             
             try {
                 // Завантажуємо повні дані користувача через API
-                const apiUrl = state.admin?.api_url || 'http://128.140.40.178:8081/api';
+                // NOTE: API must be HTTPS (WebApp is served over HTTPS).
+                const apiUrl = state.apiUrl || state.admin?.api_url || 'https://128-140-40-178.sslip.io/api';
                 const response = await fetch(`${apiUrl}/user/${userId}/full?days=30`);
                 
                 if (!response.ok) {

@@ -972,19 +972,12 @@
 
             title.textContent = `Звіти: ${user?.username || 'ID: ' + state.managingUserId}`;
 
-            // Використовуємо завантажені метадані
-            const reports = state.reportsMetadata?.[state.managingUserId] || [];
+            // Використовуємо звіти з state (вони вже завантажені)
+            const reports = state.userReports || [];
+            console.log('openUserReportsModal - reports:', reports);
 
-            if (reports.length > 0) {
-                state.userReports = reports;
-                renderReportsList(reports);
-                modal.style.display = 'flex';
-            } else {
-                // Показуємо порожню модалку
-                state.userReports = [];
-                renderReportsList([]);
-                modal.style.display = 'flex';
-            }
+            renderReportsList(reports);
+            modal.style.display = 'flex';
         }
 
         function closeReportsModal(e) {
@@ -1136,20 +1129,11 @@
             const report = state.userReports.find(r => r.id === reportId);
             if (!report) {
                 console.error('Звіт не знайдено:', reportId);
+                alert('Звіт не знайдено');
                 return;
             }
 
-            // Перевіряємо, чи є повні дані (tasks)
-            if (!report.tasks || report.tasks.length === 0) {
-                // Це тільки метадані - запитуємо повні дані через бота
-                // Бот відправить кнопку з WebApp URL що містить повні дані
-                tg.sendData(JSON.stringify({
-                    action: 'admin_v2',
-                    type: 'get_report_data',
-                    report_id: reportId
-                }));
-                return;
-            }
+            console.log('Opening edit modal for report:', report);
 
             state.editingReportId = reportId;
             // Нормалізуємо формат завдань (text може бути як text так і task)
@@ -1160,14 +1144,23 @@
                 status: t.status || 'completed'
             }));
 
+            console.log('Normalized tasks for editing:', state.editingTasks);
+
             document.getElementById('edit-report-date').value = report.date || '';
             renderEditTasks(state.editingTasks);
 
+            // Закриваємо модалку зі списком звітів
+            document.getElementById('reports-modal').style.display = 'none';
+            // Відкриваємо модалку редагування
             document.getElementById('edit-report-modal').style.display = 'flex';
         }
 
         function closeEditReportModal(e) {
             document.getElementById('edit-report-modal').style.display = 'none';
+            // Якщо є звіти в state, показуємо список назад
+            if (state.userReports && state.userReports.length > 0) {
+                document.getElementById('reports-modal').style.display = 'flex';
+            }
         }
 
         function saveEditedReport() {
@@ -1207,6 +1200,16 @@
                 tasks: tasks
             }));
 
+            // Оновлюємо дані в state
+            report.date = date;
+            report.tasks = tasks;
+
+            // Оновлюємо список звітів
+            renderReportsList(state.userReports);
+
+            // Показуємо повідомлення
+            alert('✅ Звіт збережено!');
+
             closeEditReportModal();
         }
 
@@ -1231,14 +1234,27 @@
                 });
                 console.log('Sending delete request:', data);
                 tg.sendData(data);
-                // tg.close(); // sendData should close it, but acts as backup
+
+                // Видаляємо звіт з локального списку
+                state.userReports = state.userReports.filter(r => r.id !== state.editingReportId);
+
+                // Оновлюємо список звітів
+                renderReportsList(state.userReports);
+
+                // Показуємо повідомлення
+                alert('🗑️ Звіт видалено!');
+
+                // Закриваємо модалку редагування і відкриваємо список
+                document.getElementById('edit-report-modal').style.display = 'none';
+                if (state.userReports.length > 0) {
+                    document.getElementById('reports-modal').style.display = 'flex';
+                } else {
+                    // Якщо звітів не залишилося, закриваємо все
+                    document.getElementById('reports-modal').style.display = 'none';
+                }
             } catch (e) {
                 alert('Помилка відправки: ' + e.message);
             }
-
-            // UI cleanup just in case app doesn't close immediately (though it should)
-            closeEditReportModal();
-            closeReportsModal();
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -1254,44 +1270,29 @@
             // Initialization via URL data
             const urlParams = new URLSearchParams(window.location.search);
             
-            // Перевіряємо, чи є окремий звіт для редагування
-            const editReportParam = urlParams.get('edit_report');
+            // Перевіряємо, чи є звіти користувача для перегляду/редагування
+            const userReportsParam = urlParams.get('user_reports');
             
-            if (editReportParam) {
-                // Режим редагування окремого звіту
+            if (userReportsParam) {
+                // Режим перегляду та редагування звітів користувача
                 try {
-                    const reportData = JSON.parse(decodeURIComponent(editReportParam));
-                    console.log('Parsed report data:', reportData);
+                    const reportsData = JSON.parse(decodeURIComponent(userReportsParam));
+                    console.log('Parsed user reports data:', reportsData);
                     
-                    state.managingUserId = reportData.user_id;  // Беремо з даних звіту
-                    state.editingReportId = reportData.id;
+                    state.managingUserId = reportsData.user_id;
+                    state.userReports = reportsData.reports || [];
                     
                     console.log('Set state.managingUserId:', state.managingUserId);
-                    console.log('Set state.editingReportId:', state.editingReportId);
+                    console.log('Loaded reports count:', state.userReports.length);
                     
-                    // Нормалізуємо формат завдань
-                    state.editingTasks = (reportData.tasks || []).map(t => ({
-                        text: t.task || t.text || '',
-                        hours: t.hours || 0,
-                        minutes: t.minutes || 0,
-                        status: t.status || 'completed'
-                    }));
-                    
-                    state.userReports = [reportData]; // Додаємо в список для deleteReport
-                    
-                    console.log('Режим редагування звіту:', reportData.id);
-                    console.log('Завдання для редагування:', state.editingTasks);
-                    
-                    // Відразу відкриваємо модалку редагування
+                    // Відразу відкриваємо модалку зі списком звітів
                     setTimeout(() => {
                         document.getElementById('loading').style.display = 'none';
-                        document.getElementById('edit-report-date').value = reportData.date || '';
-                        renderEditTasks(state.editingTasks);
-                        document.getElementById('edit-report-modal').style.display = 'flex';
+                        openUserReportsModal();
                     }, 500);
                 } catch (e) {
-                    console.error('Помилка завантаження звіту:', e);
-                    alert('Помилка завантаження звіту: ' + e.message);
+                    console.error('Помилка завантаження звітів:', e);
+                    alert('Помилка завантаження звітів: ' + e.message);
                     setTimeout(() => {
                         document.getElementById('loading').style.display = 'none';
                     }, 800);

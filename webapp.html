@@ -1087,7 +1087,7 @@
             state.editingTasks[idx][field] = value;
         }
 
-        async function openEditReportModal(reportId) {
+        function openEditReportModal(reportId) {
             const report = state.userReports.find(r => r.id === reportId);
             if (!report) {
                 console.error('Звіт не знайдено:', reportId);
@@ -1096,65 +1096,13 @@
 
             // Перевіряємо, чи є повні дані (tasks)
             if (!report.tasks || report.tasks.length === 0) {
-                // Це тільки метадані - завантажуємо повні дані через API
-                if (!state.apiUrl) {
-                    alert('API URL не налаштовано');
-                    return;
-                }
-
-                try {
-                    // Показуємо індикатор завантаження
-                    const loading = document.createElement('div');
-                    loading.style.cssText = 'position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); background: var(--bg-color); padding: 20px; border-radius: 12px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); z-index: 4000;';
-                    loading.innerHTML = '<div class="spinner"></div><div style="margin-top: 12px;">Завантаження...</div>';
-                    document.body.appendChild(loading);
-
-                    console.log('Fetching report from:', `${state.apiUrl}/report/${reportId}`);
-
-                    const response = await fetch(`${state.apiUrl}/report/${reportId}`, {
-                        method: 'GET',
-                        mode: 'cors',
-                        headers: {
-                            'Content-Type': 'application/json'
-                        }
-                    });
-
-                    if (!response.ok) {
-                        const errorText = await response.text();
-                        console.error('API Error:', response.status, errorText);
-                        throw new Error(`HTTP ${response.status}: ${errorText || 'Не вдалося завантажити звіт'}`);
-                    }
-
-                    const fullReport = await response.json();
-                    console.log('Report loaded:', fullReport);
-                    
-                    // Оновлюємо звіт в state з повними даними
-                    const index = state.userReports.findIndex(r => r.id === reportId);
-                    if (index !== -1) {
-                        state.userReports[index] = {...report, ...fullReport};
-                    }
-
-                    document.body.removeChild(loading);
-
-                    // Тепер відкриваємо редактор з повними даними
-                    state.editingReportId = reportId;
-                    state.editingTasks = fullReport.tasks.map(t => ({
-                        text: t.task || '',
-                        hours: t.hours || 0,
-                        minutes: t.minutes || 0,
-                        status: t.status || 'completed'
-                    }));
-
-                    document.getElementById('edit-report-date').value = fullReport.date || '';
-                    renderEditTasks(state.editingTasks);
-                    document.getElementById('edit-report-modal').style.display = 'flex';
-
-                } catch (error) {
-                    console.error('Помилка завантаження звіту:', error);
-                    alert('Помилка: ' + error.message);
-                    const loading = document.querySelector('div[style*="z-index: 4000"]');
-                    if (loading) document.body.removeChild(loading);
-                }
+                // Це тільки метадані - запитуємо повні дані через бота
+                // Бот відправить кнопку з WebApp URL що містить повні дані
+                tg.sendData(JSON.stringify({
+                    action: 'admin_v2',
+                    type: 'get_report_data',
+                    report_id: reportId
+                }));
                 return;
             }
 

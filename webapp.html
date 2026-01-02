@@ -622,6 +622,8 @@
             </div>
             <button id="btn-rename" class="btn btn-secondary" style="margin-top: 10px;"
                 onclick="adminUserRename()">Перейменувати</button>
+            <button id="btn-delete" class="btn btn-danger" style="margin-top: 10px;" onclick="deleteUser()">🗑️ Видалити
+                користувача</button>
         </div>
     </div>
 
@@ -890,7 +892,7 @@
         }
 
         function adminUserRename() {
-            const newName = prompt('Введіть нове ім\'я користувача:');
+            const newName = prompt('Введіть нове ім\'я:', state.managingUser?.username || '');
             if (newName && newName.trim()) {
                 tg.sendData(JSON.stringify({
                     action: 'admin_v2',
@@ -898,10 +900,20 @@
                     user_id: state.managingUserId,
                     new_name: newName.trim()
                 }));
-                closeModal();
             }
         }
 
+        function deleteUser() {
+            const user = state.managingUser;
+            const username = user?.username || user?.first_name || 'користувача';
+            if (confirm(`УВАГА! Ви збираєтесь ПОВНІСТЮ ВИДАЛИТИ ${username} з бази даних.\n\nЦе видалить:\n- Користувача\n- Всі його звіти\n- Налаштування Odoo\n\nПродовжити?`)) {
+                tg.sendData(JSON.stringify({
+                    action: 'admin_v2',
+                    type: 'delete_user',
+                    user_id: state.managingUserId
+                }));
+            }
+        }
         function adminAction(type) {
             tg.sendData(JSON.stringify({ action: 'admin_v2', type: type }));
         }

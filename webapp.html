@@ -964,33 +964,17 @@
 
         // Reports Functions
         function openUserReportsModal() {
-            const modal = document.getElementById('reports-modal');
-            const title = document.getElementById('reports-modal-title');
-            const user = state.users.find(u => u.id == state.managingUserId);
-
-            title.textContent = `Звіти: ${user?.username || 'ID: ' + state.managingUserId}`;
-
-            // SPA mode: try pre-loaded reports first
-            const reports = (state.adminReports && state.adminReports[state.managingUserId]);
-
-            if (reports && reports.length > 0) {
-                loadUserReports(reports);
-                modal.style.display = 'flex';
-            } else {
-                // Показуємо модалку з повідомленням про відсутність звітів
-                state.userReports = [];
-                renderReportsList([]);
-                modal.style.display = 'flex';
-            }
+            // Відправляємо запит до бота для отримання звітів
+            // Бот відправить кнопку з WebApp, який містить звіти в URL
+            tg.sendData(JSON.stringify({
+                action: 'admin_v2',
+                type: 'get_user_reports',
+                user_id: state.managingUserId
+            }));
         }
 
         function closeReportsModal(e) {
             document.getElementById('reports-modal').style.display = 'none';
-        }
-
-        function loadUserReports(reports) {
-            state.userReports = reports;
-            renderReportsList(reports);
         }
 
         function renderReportsList(reports) {
@@ -1190,6 +1174,50 @@
 
             // Initialization via URL data
             const urlParams = new URLSearchParams(window.location.search);
+            
+            // Перевіряємо, чи є окремі звіти користувача в URL (для адміна)
+            const reportsParam = urlParams.get('reports');
+            const managingUserParam = urlParams.get('managing_user');
+            
+            if (reportsParam && managingUserParam) {
+                // Режим перегляду звітів конкретного користувача
+                try {
+                    const reportsData = JSON.parse(decodeURIComponent(reportsParam));
+                    state.managingUserId = parseInt(managingUserParam);
+                    
+                    // Декомпресуємо звіти
+                    const decompressed = reportsData.reports.map(r => ({
+                        id: r.i,
+                        date: r.d,
+                        tasks_count: r.tc,
+                        total_hours: r.th,
+                        tasks: (r.t || []).map(t => ({
+                            text: t.t || '',
+                            hours: t.h || 0,
+                            minutes: t.m || 0,
+                            status: t.s === 1 ? 'completed' : 'in_progress'
+                        }))
+                    }));
+                    
+                    state.userReports = decompressed;
+                    console.log('Завантажено звітів:', decompressed.length);
+                    
+                    // Відразу відкриваємо модалку зі звітами
+                    setTimeout(() => {
+                        document.getElementById('loading').style.display = 'none';
+                        document.getElementById('reports-modal-title').textContent = `Звіти користувача ID: ${state.managingUserId}`;
+                        renderReportsList(decompressed);
+                        document.getElementById('reports-modal').style.display = 'flex';
+                    }, 500);
+                } catch (e) {
+                    console.error('Помилка завантаження звітів:', e);
+                    setTimeout(() => {
+                        document.getElementById('loading').style.display = 'none';
+                    }, 800);
+                }
+                return; // Виходимо, щоб не обробляти основні дані
+            }
+            
             const rawData = urlParams.get('data');
             if (rawData) {
                 try {
@@ -1230,32 +1258,6 @@
 
                     // Update History
                     renderHistory(initData.history);
-
-                    // Admin SPA Pre-load Decompression
-                    if (state.isAdmin && initData.admin?.recent_reports) {
-                        try {
-                            const decompressed = {};
-                            for (const [uid, reports] of Object.entries(initData.admin.recent_reports)) {
-                                decompressed[uid] = reports.map(r => ({
-                                    id: r.i,
-                                    date: r.d,
-                                    tasks_count: r.tc,
-                                    total_hours: r.th,
-                                    tasks: (r.t || []).map(t => ({
-                                        text: t.t || '',
-                                        hours: t.h || 0,
-                                        minutes: t.m || 0,
-                                        status: t.s === 1 ? 'completed' : 'in_progress'
-                                    }))
-                                }));
-                            }
-                            state.adminReports = decompressed;
-                            console.log('Звіти завантажені:', Object.keys(decompressed).length, 'користувачів');
-                        } catch (err) {
-                            console.error('Помилка декомпресії:', err);
-                            state.adminReports = {};
-                        }
-                    }
 
                 } catch (e) {
                     console.error('Помилка парсингу init data:', e);

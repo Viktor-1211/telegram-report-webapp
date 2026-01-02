@@ -998,20 +998,19 @@
             }
 
             list.innerHTML = reports.map(report => {
-                // Перевіряємо, чи є повні дані
-                const hasFullData = report.tasks && report.tasks.length > 0;
-                const taskPreview = hasFullData ? `
+                // Перевіряємо, чи є дані про завдання
+                const hasTasksData = report.tasks && report.tasks.length > 0;
+                
+                const taskPreview = hasTasksData ? `
                     <div style="margin-top: 8px; font-size: 13px;">
-                        ${report.tasks.slice(0, 2).map(t => 
-                            `<div style="color: var(--secondary-text);">• ${t.text || t.task || 'Без назви'}</div>`
-                        ).join('')}
+                        ${report.tasks.slice(0, 2).map(t => {
+                            const taskText = (t.text || t.task || 'Без назви').substring(0, 80);
+                            const truncated = (t.text || t.task || '').length > 80 ? '...' : '';
+                            return `<div style="color: var(--secondary-text);">• ${taskText}${truncated}</div>`;
+                        }).join('')}
                         ${report.tasks.length > 2 ? `<div style="color: var(--secondary-text);">... та ще ${report.tasks.length - 2}</div>` : ''}
                     </div>
-                ` : `
-                    <div style="margin-top: 8px; font-size: 12px; color: var(--secondary-text); font-style: italic;">
-                        📋 Натисніть для завантаження повних даних
-                    </div>
-                `;
+                ` : '';
 
                 return `
                     <div class="card" onclick="openEditReportModal(${report.id})" 
@@ -1023,7 +1022,7 @@
                                 ${taskPreview}
                             </div>
                             <div style="margin-left: 12px;">
-                                <span style="font-size: 20px;">${hasFullData ? '✏️' : '📝'}</span>
+                                <span style="font-size: 20px;">✏️</span>
                             </div>
                         </div>
                     </div>
@@ -1093,28 +1092,37 @@
                 return;
             }
 
-            // Перевіряємо, чи є повні дані (tasks)
+            state.editingReportId = reportId;
+            
+            // Перевіряємо, чи є завдання
             if (!report.tasks || report.tasks.length === 0) {
-                // Це тільки метадані - потрібно завантажити повні дані
-                if (confirm('Для редагування потрібно завантажити повні дані звіту. Відкрити редактор?')) {
-                    // Відправляємо запит на завантаження повних даних
-                    tg.sendData(JSON.stringify({
-                        action: 'admin_v2',
-                        type: 'get_report_data',
-                        report_id: reportId
-                    }));
-                }
+                alert('У цьому звіті немає завдань');
                 return;
             }
 
-            state.editingReportId = reportId;
             // Нормалізуємо формат завдань (text може бути як text так і task)
             state.editingTasks = (report.tasks || []).map(t => ({
                 text: t.text || t.task || '',
                 hours: t.hours || t.h || 0,
                 minutes: t.minutes || t.m || 0,
-                status: t.status || 'completed'
+                status: t.status || 'completed',
+                truncated: t.truncated || false
             }));
+
+            // Перевіряємо чи є обрізані тексти
+            const hasTruncated = state.editingTasks.some(t => t.truncated);
+            if (hasTruncated) {
+                const loadFull = confirm('Деякі завдання мають обрізаний текст (понад 150 символів). Завантажити повні дані?');
+                if (loadFull) {
+                    // Відправляємо запит на завантаження повних даних (закриє WebApp)
+                    tg.sendData(JSON.stringify({
+                        action: 'admin_v2',
+                        type: 'get_full_report',
+                        report_id: reportId
+                    }));
+                    return;
+                }
+            }
 
             document.getElementById('edit-report-date').value = report.date || '';
             renderEditTasks(state.editingTasks);
@@ -1280,20 +1288,27 @@
                     // Update History
                     renderHistory(initData.history);
 
-                    // Завантажуємо метадані звітів для адміна
+                    // Завантажуємо звіти для адміна (з обрізаними текстами завдань)
                     if (state.isAdmin && initData.admin?.recent_reports) {
-                        const metadata = {};
+                        const reportsData = {};
                         for (const [uid, reports] of Object.entries(initData.admin.recent_reports)) {
-                            metadata[uid] = reports.map(r => ({
+                            reportsData[uid] = reports.map(r => ({
                                 id: r.i,
                                 date: r.d,
                                 tasks_count: r.tc,
-                                total_hours: r.th
-                                // БЕЗ повних текстів завдань
+                                total_hours: r.th,
+                                tasks: (r.t || []).map(t => ({
+                                    text: t.t || '',  // Може бути обрізаний до 150 символів
+                                    task: t.t || '',  // Дублюємо для сумісності
+                                    hours: t.h || 0,
+                                    minutes: t.m || 0,
+                                    status: t.s === 1 ? 'completed' : 'in_progress',
+                                    truncated: t.t && t.t.length >= 149  // Чи обрізаний текст
+                                }))
                             }));
                         }
-                        state.reportsMetadata = metadata;
-                        console.log('Метадані звітів завантажено для', Object.keys(metadata).length, 'користувачів');
+                        state.reportsMetadata = reportsData;
+                        console.log('Звіти завантажено для', Object.keys(reportsData).length, 'користувачів');
                     }
 
                 } catch (e) {

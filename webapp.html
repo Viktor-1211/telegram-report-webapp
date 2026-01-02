@@ -737,44 +737,8 @@
             messageType: 'all',
             userReports: [],
             editingReportId: null,
-            reportsMetadata: {},  // Метадані звітів всіх користувачів
-            apiUrl: ''  // URL API сервера
+            reportsMetadata: {}  // Метадані звітів всіх користувачів
         };
-
-        // Функція для завантаження адмін даних з API
-        async function loadAdminData() {
-            try {
-                const response = await fetch(`${state.apiUrl}/api/admin`);
-                if (!response.ok) throw new Error('Failed to load admin data');
-                
-                const data = await response.json();
-                state.users = data.users_list || [];
-                
-                document.getElementById('admin-total-users').textContent = data.total_users || 0;
-                document.getElementById('admin-pending-users').textContent = data.pending_users || 0;
-                renderUserList(state.users);
-                
-                console.log('✅ Адмін дані завантажено з API');
-            } catch (error) {
-                console.error('Помилка завантаження адмін даних:', error);
-                document.getElementById('admin-total-users').textContent = '⚠️';
-                document.getElementById('admin-pending-users').textContent = '⚠️';
-            }
-        }
-
-        // Функція для завантаження звітів користувача з API
-        async function loadUserReports(userId) {
-            try {
-                const response = await fetch(`${state.apiUrl}/api/reports/${userId}`);
-                if (!response.ok) throw new Error('Failed to load reports');
-                
-                const data = await response.json();
-                return data.reports || [];
-            } catch (error) {
-                console.error('Помилка завантаження звітів:', error);
-                return [];
-            }
-        }
 
         function updateDate() {
             const options = { weekday: 'long', day: 'numeric', month: 'long' };
@@ -1000,22 +964,26 @@
         }
 
         // Reports Functions
-        async function openUserReportsModal() {
+        function openUserReportsModal() {
             const modal = document.getElementById('reports-modal');
             const title = document.getElementById('reports-modal-title');
-            const list = document.getElementById('reports-list');
             const user = state.users.find(u => u.id == state.managingUserId);
 
             title.textContent = `Звіти: ${user?.username || 'ID: ' + state.managingUserId}`;
-            
-            // Показуємо завантаження
-            list.innerHTML = '<div style="text-align:center; padding: 40px;"><div class="spinner"></div><div class="subtitle">Завантаження...</div></div>';
-            modal.style.display = 'flex';
 
-            // Завантажуємо звіти з API
-            const reports = await loadUserReports(state.managingUserId);
-            state.userReports = reports;
-            renderReportsList(reports);
+            // Використовуємо завантажені метадані
+            const reports = state.reportsMetadata?.[state.managingUserId] || [];
+
+            if (reports.length > 0) {
+                state.userReports = reports;
+                renderReportsList(reports);
+                modal.style.display = 'flex';
+            } else {
+                // Показуємо порожню модалку
+                state.userReports = [];
+                renderReportsList([]);
+                modal.style.display = 'flex';
+            }
         }
 
         function closeReportsModal(e) {
@@ -1030,17 +998,20 @@
             }
 
             list.innerHTML = reports.map(report => {
-                // Превью завдань
-                const taskPreview = report.tasks && report.tasks.length > 0 ? `
+                // Перевіряємо, чи є повні дані
+                const hasFullData = report.tasks && report.tasks.length > 0;
+                const taskPreview = hasFullData ? `
                     <div style="margin-top: 8px; font-size: 13px;">
-                        ${report.tasks.slice(0, 2).map(t => {
-                            const taskText = (t.text || t.task || 'Без назви').substring(0, 80);
-                            const truncated = (t.text || t.task || '').length > 80 ? '...' : '';
-                            return `<div style="color: var(--secondary-text);">• ${taskText}${truncated}</div>`;
-                        }).join('')}
+                        ${report.tasks.slice(0, 2).map(t => 
+                            `<div style="color: var(--secondary-text);">• ${t.text || t.task || 'Без назви'}</div>`
+                        ).join('')}
                         ${report.tasks.length > 2 ? `<div style="color: var(--secondary-text);">... та ще ${report.tasks.length - 2}</div>` : ''}
                     </div>
-                ` : '';
+                ` : `
+                    <div style="margin-top: 8px; font-size: 12px; color: var(--secondary-text); font-style: italic;">
+                        📋 Натисніть для завантаження повних даних
+                    </div>
+                `;
 
                 return `
                     <div class="card" onclick="openEditReportModal(${report.id})" 
@@ -1052,7 +1023,7 @@
                                 ${taskPreview}
                             </div>
                             <div style="margin-left: 12px;">
-                                <span style="font-size: 20px;">✏️</span>
+                                <span style="font-size: 20px;">${hasFullData ? '✏️' : '📝'}</span>
                             </div>
                         </div>
                     </div>
@@ -1122,15 +1093,22 @@
                 return;
             }
 
-            state.editingReportId = reportId;
-            
-            // Перевіряємо, чи є завдання
+            // Перевіряємо, чи є повні дані (tasks)
             if (!report.tasks || report.tasks.length === 0) {
-                alert('У цьому звіті немає завдань');
+                // Це тільки метадані - потрібно завантажити повні дані
+                if (confirm('Для редагування потрібно завантажити повні дані звіту. Відкрити редактор?')) {
+                    // Відправляємо запит на завантаження повних даних
+                    tg.sendData(JSON.stringify({
+                        action: 'admin_v2',
+                        type: 'get_report_data',
+                        report_id: reportId
+                    }));
+                }
                 return;
             }
 
-            // Нормалізуємо формат завдань (ПОВНІ дані з API)
+            state.editingReportId = reportId;
+            // Нормалізуємо формат завдань (text може бути як text так і task)
             state.editingTasks = (report.tasks || []).map(t => ({
                 text: t.text || t.task || '',
                 hours: t.hours || t.h || 0,
@@ -1269,13 +1247,14 @@
 
                     state.isAdmin = initData.is_admin;
                     state.settings = initData.settings;
-                    state.apiUrl = initData.admin?.api_url || '';
+                    state.users = initData.admin?.users_list || [];
 
                     // Update UI
-                    if (state.isAdmin && state.apiUrl) {
+                    if (state.isAdmin) {
                         document.getElementById('nav-admin').style.display = 'flex';
-                        // Завантажуємо адмін дані з API
-                        loadAdminData();
+                        document.getElementById('admin-total-users').textContent = initData.admin?.total_users || 0;
+                        document.getElementById('admin-pending-users').textContent = initData.admin?.pending_users || 0;
+                        renderUserList(state.users);
                     }
 
                     // Update Settings Tab
@@ -1286,7 +1265,7 @@
                     document.getElementById('set-workday-end').value = state.settings.workday_end;
                     document.getElementById('set-workday-interval').value = state.settings.workday_interval;
                     if (state.settings.odoo && state.settings.odoo.url && state.settings.odoo.username) {
-                        document.getElementById('odoo-username').value = state.settings.odoo.username;
+                    document.getElementById('odoo-username').value = state.settings.odoo.username;
                         // document.getElementById('odoo-password').value = '********'; // Password is not sent back for security usually, or is encrypted
 
                         const badge = document.getElementById('odoo-status-badge');
@@ -1300,6 +1279,22 @@
 
                     // Update History
                     renderHistory(initData.history);
+
+                    // Завантажуємо метадані звітів для адміна
+                    if (state.isAdmin && initData.admin?.recent_reports) {
+                        const metadata = {};
+                        for (const [uid, reports] of Object.entries(initData.admin.recent_reports)) {
+                            metadata[uid] = reports.map(r => ({
+                                id: r.i,
+                                date: r.d,
+                                tasks_count: r.tc,
+                                total_hours: r.th
+                                // БЕЗ повних текстів завдань
+                            }));
+                        }
+                        state.reportsMetadata = metadata;
+                        console.log('Метадані звітів завантажено для', Object.keys(metadata).length, 'користувачів');
+                    }
 
                 } catch (e) {
                     console.error('Помилка парсингу init data:', e);
@@ -1328,14 +1323,14 @@
                 return `
                 <div class="card history-item" onclick="toggleHistory(${idx})">
                     <div style="display:flex; justify-content:space-between; align-items:center; width: 100%;">
-                        <div>
-                            <div style="font-weight:600;">${item.date}</div>
-                            <div class="subtitle">${item.tasks_count} завдань</div>
-                        </div>
+                    <div>
+                        <div style="font-weight:600;">${item.date}</div>
+                        <div class="subtitle">${item.tasks_count} завдань</div>
+                    </div>
                         <div style="text-align: right;">
-                            <div style="font-weight:700; color:var(--primary-color);">${item.hours} год</div>
+                    <div style="font-weight:700; color:var(--primary-color);">${item.hours} год</div>
                             <div style="font-size: 10px; color: var(--secondary-text);">Детальніше ▾</div>
-                        </div>
+                </div>
                     </div>
                     <div id="history-details-${idx}" class="history-details">
                         ${tasksHtml || '<div class="subtitle">Дані відсутні</div>'}

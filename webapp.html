@@ -737,8 +737,44 @@
             messageType: 'all',
             userReports: [],
             editingReportId: null,
-            reportsMetadata: {}  // Метадані звітів всіх користувачів
+            reportsMetadata: {},  // Метадані звітів всіх користувачів
+            apiUrl: ''  // URL API сервера
         };
+
+        // Функція для завантаження адмін даних з API
+        async function loadAdminData() {
+            try {
+                const response = await fetch(`${state.apiUrl}/api/admin`);
+                if (!response.ok) throw new Error('Failed to load admin data');
+                
+                const data = await response.json();
+                state.users = data.users_list || [];
+                
+                document.getElementById('admin-total-users').textContent = data.total_users || 0;
+                document.getElementById('admin-pending-users').textContent = data.pending_users || 0;
+                renderUserList(state.users);
+                
+                console.log('✅ Адмін дані завантажено з API');
+            } catch (error) {
+                console.error('Помилка завантаження адмін даних:', error);
+                document.getElementById('admin-total-users').textContent = '⚠️';
+                document.getElementById('admin-pending-users').textContent = '⚠️';
+            }
+        }
+
+        // Функція для завантаження звітів користувача з API
+        async function loadUserReports(userId) {
+            try {
+                const response = await fetch(`${state.apiUrl}/api/reports/${userId}`);
+                if (!response.ok) throw new Error('Failed to load reports');
+                
+                const data = await response.json();
+                return data.reports || [];
+            } catch (error) {
+                console.error('Помилка завантаження звітів:', error);
+                return [];
+            }
+        }
 
         function updateDate() {
             const options = { weekday: 'long', day: 'numeric', month: 'long' };
@@ -964,26 +1000,22 @@
         }
 
         // Reports Functions
-        function openUserReportsModal() {
+        async function openUserReportsModal() {
             const modal = document.getElementById('reports-modal');
             const title = document.getElementById('reports-modal-title');
+            const list = document.getElementById('reports-list');
             const user = state.users.find(u => u.id == state.managingUserId);
 
             title.textContent = `Звіти: ${user?.username || 'ID: ' + state.managingUserId}`;
+            
+            // Показуємо завантаження
+            list.innerHTML = '<div style="text-align:center; padding: 40px;"><div class="spinner"></div><div class="subtitle">Завантаження...</div></div>';
+            modal.style.display = 'flex';
 
-            // Використовуємо завантажені метадані
-            const reports = state.reportsMetadata?.[state.managingUserId] || [];
-
-            if (reports.length > 0) {
-                state.userReports = reports;
-                renderReportsList(reports);
-                modal.style.display = 'flex';
-            } else {
-                // Показуємо порожню модалку
-                state.userReports = [];
-                renderReportsList([]);
-                modal.style.display = 'flex';
-            }
+            // Завантажуємо звіти з API
+            const reports = await loadUserReports(state.managingUserId);
+            state.userReports = reports;
+            renderReportsList(reports);
         }
 
         function closeReportsModal(e) {
@@ -998,10 +1030,8 @@
             }
 
             list.innerHTML = reports.map(report => {
-                // Перевіряємо, чи є дані про завдання
-                const hasTasksData = report.tasks && report.tasks.length > 0;
-                
-                const taskPreview = hasTasksData ? `
+                // Превью завдань
+                const taskPreview = report.tasks && report.tasks.length > 0 ? `
                     <div style="margin-top: 8px; font-size: 13px;">
                         ${report.tasks.slice(0, 2).map(t => {
                             const taskText = (t.text || t.task || 'Без назви').substring(0, 80);
@@ -1100,29 +1130,13 @@
                 return;
             }
 
-            // Нормалізуємо формат завдань (text може бути як text так і task)
+            // Нормалізуємо формат завдань (ПОВНІ дані з API)
             state.editingTasks = (report.tasks || []).map(t => ({
                 text: t.text || t.task || '',
                 hours: t.hours || t.h || 0,
                 minutes: t.minutes || t.m || 0,
-                status: t.status || 'completed',
-                truncated: t.truncated || false
+                status: t.status || 'completed'
             }));
-
-            // Перевіряємо чи є обрізані тексти
-            const hasTruncated = state.editingTasks.some(t => t.truncated);
-            if (hasTruncated) {
-                const loadFull = confirm('⚠️ Деякі завдання мають обрізаний текст (понад 60 символів).\n\nЗавантажити повні дані? (це закриє форму і відкриє редактор з повним текстом)');
-                if (loadFull) {
-                    // Відправляємо запит на завантаження повних даних (закриє WebApp)
-                    tg.sendData(JSON.stringify({
-                        action: 'admin_v2',
-                        type: 'get_full_report',
-                        report_id: reportId
-                    }));
-                    return;
-                }
-            }
 
             document.getElementById('edit-report-date').value = report.date || '';
             renderEditTasks(state.editingTasks);
@@ -1255,14 +1269,13 @@
 
                     state.isAdmin = initData.is_admin;
                     state.settings = initData.settings;
-                    state.users = initData.admin?.users_list || [];
+                    state.apiUrl = initData.admin?.api_url || '';
 
                     // Update UI
-                    if (state.isAdmin) {
+                    if (state.isAdmin && state.apiUrl) {
                         document.getElementById('nav-admin').style.display = 'flex';
-                        document.getElementById('admin-total-users').textContent = initData.admin?.total_users || 0;
-                        document.getElementById('admin-pending-users').textContent = initData.admin?.pending_users || 0;
-                        renderUserList(state.users);
+                        // Завантажуємо адмін дані з API
+                        loadAdminData();
                     }
 
                     // Update Settings Tab
@@ -1287,29 +1300,6 @@
 
                     // Update History
                     renderHistory(initData.history);
-
-                    // Завантажуємо звіти для адміна (з обрізаними текстами завдань)
-                    if (state.isAdmin && initData.admin?.recent_reports) {
-                        const reportsData = {};
-                        for (const [uid, reports] of Object.entries(initData.admin.recent_reports)) {
-                            reportsData[uid] = reports.map(r => ({
-                                id: r.i,
-                                date: r.d,
-                                tasks_count: r.tc,
-                                total_hours: r.th,
-                                tasks: (r.t || []).map(t => ({
-                                    text: t.t || '',  // Може бути обрізаний до 150 символів
-                                    task: t.t || '',  // Дублюємо для сумісності
-                                    hours: t.h || 0,
-                                    minutes: t.m || 0,
-                                    status: t.s === 1 ? 'completed' : 'in_progress',
-                                    truncated: t.t && t.t.length >= 59  // Чи обрізаний текст (60 символів)
-                                }))
-                            }));
-                        }
-                        state.reportsMetadata = reportsData;
-                        console.log('Звіти завантажено для', Object.keys(reportsData).length, 'користувачів');
-                    }
 
                 } catch (e) {
                     console.error('Помилка парсингу init data:', e);

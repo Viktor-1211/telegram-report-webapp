@@ -1109,12 +1109,24 @@
                     loading.innerHTML = '<div class="spinner"></div><div style="margin-top: 12px;">Завантаження...</div>';
                     document.body.appendChild(loading);
 
-                    const response = await fetch(`${state.apiUrl}/report/${reportId}`);
+                    console.log('Fetching report from:', `${state.apiUrl}/report/${reportId}`);
+
+                    const response = await fetch(`${state.apiUrl}/report/${reportId}`, {
+                        method: 'GET',
+                        mode: 'cors',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    });
+
                     if (!response.ok) {
-                        throw new Error('Не вдалося завантажити звіт');
+                        const errorText = await response.text();
+                        console.error('API Error:', response.status, errorText);
+                        throw new Error(`HTTP ${response.status}: ${errorText || 'Не вдалося завантажити звіт'}`);
                     }
 
                     const fullReport = await response.json();
+                    console.log('Report loaded:', fullReport);
                     
                     // Оновлюємо звіт в state з повними даними
                     const index = state.userReports.findIndex(r => r.id === reportId);

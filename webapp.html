@@ -736,7 +736,8 @@
             users: [],
             messageType: 'all',
             userReports: [],
-            editingReportId: null
+            editingReportId: null,
+            reportsMetadata: {}  // Метадані звітів всіх користувачів
         };
 
         function updateDate() {
@@ -964,13 +965,25 @@
 
         // Reports Functions
         function openUserReportsModal() {
-            // Відправляємо запит до бота для отримання звітів
-            // Бот відправить кнопку з WebApp, який містить звіти в URL
-            tg.sendData(JSON.stringify({
-                action: 'admin_v2',
-                type: 'get_user_reports',
-                user_id: state.managingUserId
-            }));
+            const modal = document.getElementById('reports-modal');
+            const title = document.getElementById('reports-modal-title');
+            const user = state.users.find(u => u.id == state.managingUserId);
+
+            title.textContent = `Звіти: ${user?.username || 'ID: ' + state.managingUserId}`;
+
+            // Використовуємо завантажені метадані
+            const reports = state.reportsMetadata?.[state.managingUserId] || [];
+
+            if (reports.length > 0) {
+                state.userReports = reports;
+                renderReportsList(reports);
+                modal.style.display = 'flex';
+            } else {
+                // Показуємо порожню модалку
+                state.userReports = [];
+                renderReportsList([]);
+                modal.style.display = 'flex';
+            }
         }
 
         function closeReportsModal(e) {
@@ -985,14 +998,20 @@
             }
 
             list.innerHTML = reports.map(report => {
-                const taskPreview = report.tasks && report.tasks.length > 0 ? `
+                // Перевіряємо, чи є повні дані
+                const hasFullData = report.tasks && report.tasks.length > 0;
+                const taskPreview = hasFullData ? `
                     <div style="margin-top: 8px; font-size: 13px;">
                         ${report.tasks.slice(0, 2).map(t => 
                             `<div style="color: var(--secondary-text);">• ${t.text || t.task || 'Без назви'}</div>`
                         ).join('')}
                         ${report.tasks.length > 2 ? `<div style="color: var(--secondary-text);">... та ще ${report.tasks.length - 2}</div>` : ''}
                     </div>
-                ` : '';
+                ` : `
+                    <div style="margin-top: 8px; font-size: 12px; color: var(--secondary-text); font-style: italic;">
+                        📋 Натисніть для завантаження повних даних
+                    </div>
+                `;
 
                 return `
                     <div class="card" onclick="openEditReportModal(${report.id})" 
@@ -1004,7 +1023,7 @@
                                 ${taskPreview}
                             </div>
                             <div style="margin-left: 12px;">
-                                <span style="font-size: 20px;">📝</span>
+                                <span style="font-size: 20px;">${hasFullData ? '✏️' : '📝'}</span>
                             </div>
                         </div>
                     </div>
@@ -1071,6 +1090,20 @@
             const report = state.userReports.find(r => r.id === reportId);
             if (!report) {
                 console.error('Звіт не знайдено:', reportId);
+                return;
+            }
+
+            // Перевіряємо, чи є повні дані (tasks)
+            if (!report.tasks || report.tasks.length === 0) {
+                // Це тільки метадані - потрібно завантажити повні дані
+                if (confirm('Для редагування потрібно завантажити повні дані звіту. Відкрити редактор?')) {
+                    // Відправляємо запит на завантаження повних даних
+                    tg.sendData(JSON.stringify({
+                        action: 'admin_v2',
+                        type: 'get_report_data',
+                        report_id: reportId
+                    }));
+                }
                 return;
             }
 
@@ -1175,42 +1208,30 @@
             // Initialization via URL data
             const urlParams = new URLSearchParams(window.location.search);
             
-            // Перевіряємо, чи є окремі звіти користувача в URL (для адміна)
-            const reportsParam = urlParams.get('reports');
-            const managingUserParam = urlParams.get('managing_user');
+            // Перевіряємо, чи є окремий звіт для редагування
+            const editReportParam = urlParams.get('edit_report');
+            const editUserIdParam = urlParams.get('user_id');
             
-            if (reportsParam && managingUserParam) {
-                // Режим перегляду звітів конкретного користувача
+            if (editReportParam && editUserIdParam) {
+                // Режим редагування окремого звіту
                 try {
-                    const reportsData = JSON.parse(decodeURIComponent(reportsParam));
-                    state.managingUserId = parseInt(managingUserParam);
+                    const reportData = JSON.parse(decodeURIComponent(editReportParam));
+                    state.managingUserId = parseInt(editUserIdParam);
+                    state.editingReportId = reportData.id;
+                    state.editingTasks = reportData.tasks || [];
+                    state.userReports = [reportData]; // Додаємо в список для deleteReport
                     
-                    // Декомпресуємо звіти
-                    const decompressed = reportsData.reports.map(r => ({
-                        id: r.i,
-                        date: r.d,
-                        tasks_count: r.tc,
-                        total_hours: r.th,
-                        tasks: (r.t || []).map(t => ({
-                            text: t.t || '',
-                            hours: t.h || 0,
-                            minutes: t.m || 0,
-                            status: t.s === 1 ? 'completed' : 'in_progress'
-                        }))
-                    }));
+                    console.log('Режим редагування звіту:', reportData.id);
                     
-                    state.userReports = decompressed;
-                    console.log('Завантажено звітів:', decompressed.length);
-                    
-                    // Відразу відкриваємо модалку зі звітами
+                    // Відразу відкриваємо модалку редагування
                     setTimeout(() => {
                         document.getElementById('loading').style.display = 'none';
-                        document.getElementById('reports-modal-title').textContent = `Звіти користувача ID: ${state.managingUserId}`;
-                        renderReportsList(decompressed);
-                        document.getElementById('reports-modal').style.display = 'flex';
+                        document.getElementById('edit-report-date').value = reportData.date || '';
+                        renderEditTasks(state.editingTasks);
+                        document.getElementById('edit-report-modal').style.display = 'flex';
                     }, 500);
                 } catch (e) {
-                    console.error('Помилка завантаження звітів:', e);
+                    console.error('Помилка завантаження звіту:', e);
                     setTimeout(() => {
                         document.getElementById('loading').style.display = 'none';
                     }, 800);
@@ -1258,6 +1279,22 @@
 
                     // Update History
                     renderHistory(initData.history);
+
+                    // Завантажуємо метадані звітів для адміна
+                    if (state.isAdmin && initData.admin?.recent_reports) {
+                        const metadata = {};
+                        for (const [uid, reports] of Object.entries(initData.admin.recent_reports)) {
+                            metadata[uid] = reports.map(r => ({
+                                id: r.i,
+                                date: r.d,
+                                tasks_count: r.tc,
+                                total_hours: r.th
+                                // БЕЗ повних текстів завдань
+                            }));
+                        }
+                        state.reportsMetadata = metadata;
+                        console.log('Метадані звітів завантажено для', Object.keys(metadata).length, 'користувачів');
+                    }
 
                 } catch (e) {
                     console.error('Помилка парсингу init data:', e);

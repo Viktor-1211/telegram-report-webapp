@@ -1333,36 +1333,6 @@
             // Initialization via URL data
             const urlParams = new URLSearchParams(window.location.search);
             
-            // Перевіряємо, чи є звіти користувача для перегляду/редагування
-            const userReportsParam = urlParams.get('user_reports');
-            
-            if (userReportsParam) {
-                // Режим перегляду та редагування звітів користувача
-                try {
-                    const reportsData = JSON.parse(decodeURIComponent(userReportsParam));
-                    console.log('Parsed user reports data:', reportsData);
-                    
-                    state.managingUserId = reportsData.user_id;
-                    state.userReports = reportsData.reports || [];
-                    
-                    console.log('Set state.managingUserId:', state.managingUserId);
-                    console.log('Loaded reports count:', state.userReports.length);
-                    
-                    // Відразу відкриваємо модалку зі списком звітів
-                    setTimeout(() => {
-                        document.getElementById('loading').style.display = 'none';
-                        openUserReportsModal();
-                    }, 500);
-                } catch (e) {
-                    console.error('Помилка завантаження звітів:', e);
-                    alert('Помилка завантаження звітів: ' + e.message);
-                    setTimeout(() => {
-                        document.getElementById('loading').style.display = 'none';
-                    }, 800);
-                }
-                return; // Виходимо, щоб не обробляти основні дані
-            }
-            
             const rawData = urlParams.get('data');
             if (rawData) {
                 try {

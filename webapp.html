@@ -1049,25 +1049,66 @@
 
         function renderEditTasks(tasks) {
             const tasksContainer = document.getElementById('edit-report-tasks');
+            console.log('Rendering edit tasks:', tasks);
+            
             if (tasks && tasks.length > 0) {
-                tasksContainer.innerHTML = tasks.map((task, idx) => `
-                    <div class="task-item" style="margin-bottom: 0;">
-                        <button type="button" class="btn-remove-task" onclick="removeEditTask(${idx})">×</button>
-                        <textarea placeholder="Опишіть завдання..." 
-                            oninput="updateEditTask(${idx}, 'text', this.value)">${task.text || ''}</textarea>
-                        <div style="display: flex; gap: 10px; margin-top: 12px;">
-                            <input type="number" placeholder="Год" style="width: 70px;" 
-                                value="${task.hours || 0}" oninput="updateEditTask(${idx}, 'hours', this.value)">
-                            <input type="number" placeholder="Хв" style="width: 70px;" 
-                                value="${task.minutes || 0}" oninput="updateEditTask(${idx}, 'minutes', this.value)">
-                            <select style="flex: 1;" onchange="updateEditTask(${idx}, 'status', this.value)">
-                                <option value="completed" ${task.status === 'completed' ? 'selected' : ''}>✅ Виконано</option>
-                                <option value="in_progress" ${task.status === 'in_progress' ? 'selected' : ''}>🔄 У процесі</option>
-                                <option value="blocked" ${task.status === 'blocked' ? 'selected' : ''}>🚫 Блокери</option>
-                            </select>
-                        </div>
-                    </div>
-                `).join('');
+                tasksContainer.innerHTML = '';
+                tasks.forEach((task, idx) => {
+                    const taskDiv = document.createElement('div');
+                    taskDiv.className = 'task-item';
+                    taskDiv.style.marginBottom = '0';
+                    
+                    // Кнопка видалення
+                    const removeBtn = document.createElement('button');
+                    removeBtn.type = 'button';
+                    removeBtn.className = 'btn-remove-task';
+                    removeBtn.textContent = '×';
+                    removeBtn.onclick = () => removeEditTask(idx);
+                    taskDiv.appendChild(removeBtn);
+                    
+                    // Textarea для тексту завдання
+                    const textarea = document.createElement('textarea');
+                    textarea.placeholder = 'Опишіть завдання...';
+                    textarea.value = task.text || '';
+                    textarea.oninput = (e) => updateEditTask(idx, 'text', e.target.value);
+                    taskDiv.appendChild(textarea);
+                    
+                    // Контейнер для годин, хвилин та статусу
+                    const inputsDiv = document.createElement('div');
+                    inputsDiv.style.cssText = 'display: flex; gap: 10px; margin-top: 12px;';
+                    
+                    // Години
+                    const hoursInput = document.createElement('input');
+                    hoursInput.type = 'number';
+                    hoursInput.placeholder = 'Год';
+                    hoursInput.style.width = '70px';
+                    hoursInput.value = task.hours || 0;
+                    hoursInput.oninput = (e) => updateEditTask(idx, 'hours', e.target.value);
+                    inputsDiv.appendChild(hoursInput);
+                    
+                    // Хвилини
+                    const minutesInput = document.createElement('input');
+                    minutesInput.type = 'number';
+                    minutesInput.placeholder = 'Хв';
+                    minutesInput.style.width = '70px';
+                    minutesInput.value = task.minutes || 0;
+                    minutesInput.oninput = (e) => updateEditTask(idx, 'minutes', e.target.value);
+                    inputsDiv.appendChild(minutesInput);
+                    
+                    // Статус
+                    const statusSelect = document.createElement('select');
+                    statusSelect.style.flex = '1';
+                    statusSelect.onchange = (e) => updateEditTask(idx, 'status', e.target.value);
+                    statusSelect.innerHTML = `
+                        <option value="completed" ${task.status === 'completed' ? 'selected' : ''}>✅ Виконано</option>
+                        <option value="in_progress" ${task.status === 'in_progress' ? 'selected' : ''}>🔄 У процесі</option>
+                        <option value="blocked" ${task.status === 'blocked' ? 'selected' : ''}>🚫 Блокери</option>
+                    `;
+                    inputsDiv.appendChild(statusSelect);
+                    
+                    taskDiv.appendChild(inputsDiv);
+                    tasksContainer.appendChild(taskDiv);
+                });
             } else {
                 tasksContainer.innerHTML = '<div class="subtitle">Немає завдань</div>';
             }
@@ -1079,8 +1120,12 @@
         }
 
         function removeEditTask(idx) {
-            state.editingTasks.splice(idx, 1);
-            renderEditTasks(state.editingTasks);
+            if (state.editingTasks.length > 1) {
+                state.editingTasks.splice(idx, 1);
+                renderEditTasks(state.editingTasks);
+            } else {
+                alert('Має бути хоча б одне завдання');
+            }
         }
 
         function updateEditTask(idx, field, value) {
@@ -1209,18 +1254,26 @@
             
             // Перевіряємо, чи є окремий звіт для редагування
             const editReportParam = urlParams.get('edit_report');
-            const editUserIdParam = urlParams.get('user_id');
             
-            if (editReportParam && editUserIdParam) {
+            if (editReportParam) {
                 // Режим редагування окремого звіту
                 try {
                     const reportData = JSON.parse(decodeURIComponent(editReportParam));
-                    state.managingUserId = parseInt(editUserIdParam);
+                    state.managingUserId = reportData.user_id;  // Беремо з даних звіту
                     state.editingReportId = reportData.id;
-                    state.editingTasks = reportData.tasks || [];
+                    
+                    // Нормалізуємо формат завдань
+                    state.editingTasks = (reportData.tasks || []).map(t => ({
+                        text: t.task || t.text || '',
+                        hours: t.hours || 0,
+                        minutes: t.minutes || 0,
+                        status: t.status || 'completed'
+                    }));
+                    
                     state.userReports = [reportData]; // Додаємо в список для deleteReport
                     
                     console.log('Режим редагування звіту:', reportData.id);
+                    console.log('Завдання для редагування:', state.editingTasks);
                     
                     // Відразу відкриваємо модалку редагування
                     setTimeout(() => {
@@ -1231,6 +1284,7 @@
                     }, 500);
                 } catch (e) {
                     console.error('Помилка завантаження звіту:', e);
+                    alert('Помилка завантаження звіту: ' + e.message);
                     setTimeout(() => {
                         document.getElementById('loading').style.display = 'none';
                     }, 800);

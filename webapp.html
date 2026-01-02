@@ -847,19 +847,66 @@
         }
 
         // Admin Functions
-        function openUserModal(userId) {
+        async function openUserModal(userId) {
             const user = state.users.find(u => u.id == userId);
             if (!user) return;
+            
             state.managingUserId = userId;
-            state.managingUser = user;  // Зберігаємо об'єкт користувача
+            state.managingUser = user;
+            
+            // Показуємо модалку відразу з базовими даними
             document.getElementById('modal-user-name').textContent = user.username || user.first_name || 'Користувач ' + userId;
             document.getElementById('user-modal').style.display = 'flex';
+            
+            // Показуємо індикатор завантаження
+            showLoadingInModal('user-modal');
+            
+            try {
+                // Завантажуємо повні дані користувача через API
+                const apiUrl = state.admin?.api_url || 'http://128.140.40.178:8081/api';
+                const response = await fetch(`${apiUrl}/user/${userId}/full?days=30`);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+                
+                const data = await response.json();
+                console.log('User full data loaded:', data);
+                
+                // Оновлюємо дані користувача в state
+                Object.assign(user, data.user);
+                state.userReports = data.reports || [];
+                
+                // Заповнюємо поля Odoo
+                document.getElementById('admin-odoo-url').value = data.user.odoo_url || '';
+                document.getElementById('admin-odoo-db').value = data.user.odoo_db || '';
+                document.getElementById('admin-odoo-user').value = data.user.odoo_user_name || '';
+                document.getElementById('admin-odoo-pass').value = '';
+                
+                hideLoadingInModal('user-modal');
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                hideLoadingInModal('user-modal');
+                alert('Помилка завантаження даних користувача: ' + error.message);
+            }
+        }
 
-            // Populate Odoo fields if user data has them
-            document.getElementById('admin-odoo-url').value = user.odoo_url || '';
-            document.getElementById('admin-odoo-db').value = user.odoo_db || '';
-            document.getElementById('admin-odoo-user').value = user.odoo_username || '';
-            document.getElementById('admin-odoo-pass').value = '';
+        function showLoadingInModal(modalId) {
+            const modal = document.getElementById(modalId);
+            const content = modal.querySelector('.modal-content');
+            if (content) {
+                content.style.opacity = '0.5';
+                content.style.pointerEvents = 'none';
+            }
+        }
+
+        function hideLoadingInModal(modalId) {
+            const modal = document.getElementById(modalId);
+            const content = modal.querySelector('.modal-content');
+            if (content) {
+                content.style.opacity = '1';
+                content.style.pointerEvents = 'auto';
+            }
         }
 
         function closeModal(e) {
@@ -966,18 +1013,19 @@
 
         // Reports Functions
         function requestUserReports() {
-            // Відправляємо запит до бота на завантаження звітів користувача
-            // Бот відправить кнопку з WebApp URL що містить всі звіти
+            // Звіти вже завантажені при відкритті модалки користувача
             if (!state.managingUserId) {
                 alert('Помилка: не вибрано користувача');
                 return;
             }
 
-            tg.sendData(JSON.stringify({
-                action: 'admin_v2',
-                type: 'get_report_data',
-                user_id: state.managingUserId
-            }));
+            if (!state.userReports || state.userReports.length === 0) {
+                alert('У цього користувача немає звітів за останні 30 днів');
+                return;
+            }
+
+            // Відкриваємо модалку зі звітами
+            openUserReportsModal();
         }
 
         function openUserReportsModal() {

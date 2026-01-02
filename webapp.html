@@ -1112,7 +1112,7 @@
             // Перевіряємо чи є обрізані тексти
             const hasTruncated = state.editingTasks.some(t => t.truncated);
             if (hasTruncated) {
-                const loadFull = confirm('Деякі завдання мають обрізаний текст (понад 150 символів). Завантажити повні дані?');
+                const loadFull = confirm('⚠️ Деякі завдання мають обрізаний текст (понад 60 символів).\n\nЗавантажити повні дані? (це закриє форму і відкриє редактор з повним текстом)');
                 if (loadFull) {
                     // Відправляємо запит на завантаження повних даних (закриє WebApp)
                     tg.sendData(JSON.stringify({
@@ -1303,7 +1303,7 @@
                                     hours: t.h || 0,
                                     minutes: t.m || 0,
                                     status: t.s === 1 ? 'completed' : 'in_progress',
-                                    truncated: t.t && t.t.length >= 149  // Чи обрізаний текст
+                                    truncated: t.t && t.t.length >= 59  // Чи обрізаний текст (60 символів)
                                 }))
                             }));
                         }

@@ -1211,13 +1211,14 @@
         }
 
         function deleteReport() {
-            // Debug: check values
-            // alert(`Debug: User ${state.managingUserId}, Report ${state.editingReportId}`); // Commented out to be less annoying
+            console.log('deleteReport called');
+            console.log('state.managingUserId:', state.managingUserId);
+            console.log('state.editingReportId:', state.editingReportId);
 
             if (!confirm('Ви впевнені, що хочете видалити цей звіт?')) return;
 
             if (!state.managingUserId || !state.editingReportId) {
-                alert('Помилка: не знайдено ID користувача або звіту');
+                alert(`Помилка: не знайдено ID користувача (${state.managingUserId}) або звіту (${state.editingReportId})`);
                 return;
             }
 
@@ -1228,6 +1229,7 @@
                     user_id: parseInt(state.managingUserId),
                     report_id: parseInt(state.editingReportId)
                 });
+                console.log('Sending delete request:', data);
                 tg.sendData(data);
                 // tg.close(); // sendData should close it, but acts as backup
             } catch (e) {
@@ -1259,8 +1261,13 @@
                 // Режим редагування окремого звіту
                 try {
                     const reportData = JSON.parse(decodeURIComponent(editReportParam));
+                    console.log('Parsed report data:', reportData);
+                    
                     state.managingUserId = reportData.user_id;  // Беремо з даних звіту
                     state.editingReportId = reportData.id;
+                    
+                    console.log('Set state.managingUserId:', state.managingUserId);
+                    console.log('Set state.editingReportId:', state.editingReportId);
                     
                     // Нормалізуємо формат завдань
                     state.editingTasks = (reportData.tasks || []).map(t => ({

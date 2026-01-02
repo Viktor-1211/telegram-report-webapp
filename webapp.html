@@ -603,10 +603,6 @@
                     <label>Password</label>
                     <input type="password" id="admin-odoo-pass">
                 </div>
-                <div class="form-group">
-                    <label>Task ID (optional)</label>
-                    <input type="number" id="admin-odoo-task">
-                </div>
                 <button class="btn btn-outline" onclick="saveAdminOdoo()">Оновити Odoo</button>
             </div>
 
@@ -860,8 +856,7 @@
             document.getElementById('admin-odoo-url').value = user.odoo_url || '';
             document.getElementById('admin-odoo-db').value = user.odoo_db || '';
             document.getElementById('admin-odoo-user').value = user.odoo_username || '';
-            document.getElementById('admin-odoo-pass').value = user.odoo_password || '';
-            document.getElementById('admin-odoo-task').value = user.odoo_task_id || '';
+            document.getElementById('admin-odoo-pass').value = '';
         }
 
         function closeModal(e) {
@@ -876,8 +871,7 @@
                 url: document.getElementById('admin-odoo-url').value,
                 db: document.getElementById('admin-odoo-db').value,
                 username: document.getElementById('admin-odoo-user').value,
-                password: document.getElementById('admin-odoo-pass').value,
-                task_id: document.getElementById('admin-odoo-task').value
+                password: document.getElementById('admin-odoo-pass').value
             };
             tg.sendData(JSON.stringify(data));
         }

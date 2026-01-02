@@ -849,7 +849,8 @@
             const user = state.users.find(u => u.id == userId);
             if (!user) return;
             state.managingUserId = userId;
-            document.getElementById('modal-user-name').textContent = user.username || 'Користувач ' + userId;
+            state.managingUser = user;  // Зберігаємо об'єкт користувача
+            document.getElementById('modal-user-name').textContent = user.username || user.first_name || 'Користувач ' + userId;
             document.getElementById('user-modal').style.display = 'flex';
 
             // Populate Odoo fields if user data has them
@@ -972,16 +973,14 @@
             // SPA mode: try pre-loaded reports first
             const reports = (state.adminReports && state.adminReports[state.managingUserId]);
 
-            if (reports) {
+            if (reports && reports.length > 0) {
                 loadUserReports(reports);
                 modal.style.display = 'flex';
             } else {
-                // Fallback: Request user reports from bot (will close app)
-                tg.sendData(JSON.stringify({
-                    action: 'admin_v2',
-                    type: 'get_user_reports',
-                    user_id: state.managingUserId
-                }));
+                // Показуємо модалку з повідомленням про відсутність звітів
+                state.userReports = [];
+                renderReportsList([]);
+                modal.style.display = 'flex';
             }
         }
 
@@ -1001,28 +1000,32 @@
                 return;
             }
 
-            list.innerHTML = reports.map(report => `
-                <div class="card" onclick="openEditReportModal(${report.id})" 
-                    style="cursor: pointer; transition: var(--transition);">
-                    <div style="display: flex; justify-content: space-between; align-items: start;">
-                        <div style="flex: 1;">
-                            <div style="font-weight: 600; margin-bottom: 4px;">${report.date}</div>
-                            <div class="subtitle">${report.tasks_count || 0} завдань • ${report.total_hours || '0:00'} год</div>
-                            ${report.tasks ? `
-                                <div style="margin-top: 8px; font-size: 13px;">
-                                    ${report.tasks.slice(0, 2).map(t =>
-                `<div style="color: var(--secondary-text);">• ${t.text || 'Без назви'}</div>`
-            ).join('')}
-                                    ${report.tasks.length > 2 ? `<div style="color: var(--secondary-text);">... та ще ${report.tasks.length - 2}</div>` : ''}
-                                </div>
-                            ` : ''}
-                        </div>
-                        <div style="margin-left: 12px;">
-                            <span style="font-size: 20px;">📝</span>
+            list.innerHTML = reports.map(report => {
+                const taskPreview = report.tasks && report.tasks.length > 0 ? `
+                    <div style="margin-top: 8px; font-size: 13px;">
+                        ${report.tasks.slice(0, 2).map(t => 
+                            `<div style="color: var(--secondary-text);">• ${t.text || t.task || 'Без назви'}</div>`
+                        ).join('')}
+                        ${report.tasks.length > 2 ? `<div style="color: var(--secondary-text);">... та ще ${report.tasks.length - 2}</div>` : ''}
+                    </div>
+                ` : '';
+
+                return `
+                    <div class="card" onclick="openEditReportModal(${report.id})" 
+                        style="cursor: pointer; transition: var(--transition);">
+                        <div style="display: flex; justify-content: space-between; align-items: start;">
+                            <div style="flex: 1;">
+                                <div style="font-weight: 600; margin-bottom: 4px;">${report.date || 'Без дати'}</div>
+                                <div class="subtitle">${report.tasks_count || 0} завдань • ${report.total_hours || '0:00'} год</div>
+                                ${taskPreview}
+                            </div>
+                            <div style="margin-left: 12px;">
+                                <span style="font-size: 20px;">📝</span>
+                            </div>
                         </div>
                     </div>
-                </div>
-            `).join('');
+                `;
+            }).join('');
         }
 
         function filterReports() {
@@ -1031,7 +1034,9 @@
 
             const filtered = state.userReports.filter(report => {
                 const dateMatch = report.date?.toLowerCase().includes(query);
-                const tasksMatch = report.tasks?.some(t => t.text?.toLowerCase().includes(query));
+                const tasksMatch = report.tasks?.some(t => 
+                    (t.text || t.task || '')?.toLowerCase().includes(query)
+                );
                 return dateMatch || tasksMatch;
             });
 
@@ -1080,10 +1085,19 @@
 
         function openEditReportModal(reportId) {
             const report = state.userReports.find(r => r.id === reportId);
-            if (!report) return;
+            if (!report) {
+                console.error('Звіт не знайдено:', reportId);
+                return;
+            }
 
             state.editingReportId = reportId;
-            state.editingTasks = JSON.parse(JSON.stringify(report.tasks || []));
+            // Нормалізуємо формат завдань (text може бути як text так і task)
+            state.editingTasks = (report.tasks || []).map(t => ({
+                text: t.text || t.task || '',
+                hours: t.hours || t.h || 0,
+                minutes: t.minutes || t.m || 0,
+                status: t.status || 'completed'
+            }));
 
             document.getElementById('edit-report-date').value = report.date || '';
             renderEditTasks(state.editingTasks);
@@ -1097,15 +1111,31 @@
 
         function saveEditedReport() {
             const report = state.userReports.find(r => r.id === state.editingReportId);
-            if (!report) return;
+            if (!report) {
+                alert('Помилка: звіт не знайдено');
+                return;
+            }
 
             const date = document.getElementById('edit-report-date').value;
-            const tasks = state.editingTasks.map(t => ({
-                text: t.text,
-                hours: parseInt(t.hours) || 0,
-                minutes: parseInt(t.minutes) || 0,
-                status: t.status
-            }));
+            if (!date) {
+                alert('Будь ласка, вкажіть дату звіту');
+                return;
+            }
+
+            // Формуємо завдання в правильному форматі для бота (поле task, а не text)
+            const tasks = state.editingTasks
+                .filter(t => t.text && t.text.trim())
+                .map(t => ({
+                    task: t.text,  // Бот очікує поле 'task'
+                    hours: parseInt(t.hours) || 0,
+                    minutes: parseInt(t.minutes) || 0,
+                    status: t.status || 'completed'
+                }));
+
+            if (tasks.length === 0) {
+                alert('Додайте хоча б одне завдання');
+                return;
+            }
 
             tg.sendData(JSON.stringify({
                 action: 'admin_v2',
@@ -1211,17 +1241,18 @@
                                     date: r.d,
                                     tasks_count: r.tc,
                                     total_hours: r.th,
-                                    tasks: r.t.map(t => ({
-                                        text: t.t,
-                                        hours: t.h,
-                                        minutes: t.m,
+                                    tasks: (r.t || []).map(t => ({
+                                        text: t.t || '',
+                                        hours: t.h || 0,
+                                        minutes: t.m || 0,
                                         status: t.s === 1 ? 'completed' : 'in_progress'
                                     }))
                                 }));
                             }
                             state.adminReports = decompressed;
+                            console.log('Звіти завантажені:', Object.keys(decompressed).length, 'користувачів');
                         } catch (err) {
-                            console.error('Decompression error:', err);
+                            console.error('Помилка декомпресії:', err);
                             state.adminReports = {};
                         }
                     }

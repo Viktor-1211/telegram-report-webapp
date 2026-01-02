@@ -471,13 +471,6 @@
                     <input type="time" id="set-time" style="width: 100px;">
                 </div>
                 <div class="switch-container">
-                    <span>Формат звіту</span>
-                    <select id="set-format" style="width: 120px;">
-                        <option value="email">Як лист</option>
-                        <option value="detailed">Детальний</option>
-                    </select>
-                </div>
-                <div class="switch-container">
                     <div>
                         <div style="font-weight: 600;">Нагадування після роботи</div>
                     </div>
@@ -821,7 +814,7 @@
             const data = {
                 action: 'save_settings_v3',
                 reminder_time: document.getElementById('set-time').value,
-                report_format: document.getElementById('set-format').value,
+                report_format: 'email', // Default always
                 daily_reminders: document.getElementById('set-daily-reminders').checked,
                 workday_reminders: document.getElementById('set-workday-reminders').checked,
                 workday_start: document.getElementById('set-workday-start').value,

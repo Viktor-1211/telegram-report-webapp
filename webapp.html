@@ -614,7 +614,7 @@
             <div style="display: flex; gap: 10px; margin-top: 10px;">
                 <button class="btn btn-secondary" onclick="openMessageModal('single')">📨 Надіслати
                     повідомлення</button>
-                <button class="btn btn-secondary" onclick="openUserReportsModal()">📋 Переглянути звіти</button>
+                <button class="btn btn-secondary" onclick="requestUserReports()">📋 Переглянути звіти</button>
             </div>
             <button id="btn-rename" class="btn btn-secondary" style="margin-top: 10px;"
                 onclick="adminUserRename()">Перейменувати</button>
@@ -965,6 +965,21 @@
         }
 
         // Reports Functions
+        function requestUserReports() {
+            // Відправляємо запит до бота на завантаження звітів користувача
+            // Бот відправить кнопку з WebApp URL що містить всі звіти
+            if (!state.managingUserId) {
+                alert('Помилка: не вибрано користувача');
+                return;
+            }
+
+            tg.sendData(JSON.stringify({
+                action: 'admin_v2',
+                type: 'get_report_data',
+                user_id: state.managingUserId
+            }));
+        }
+
         function openUserReportsModal() {
             const modal = document.getElementById('reports-modal');
             const title = document.getElementById('reports-modal-title');

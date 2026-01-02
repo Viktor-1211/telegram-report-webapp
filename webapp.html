@@ -511,14 +511,19 @@
             </div>
 
             <div class="card">
-                <label>Odoo Інтеграція</label>
+                <label style="display: flex; justify-content: space-between; align-items: center;">
+                    Odoo Інтеграція
+                    <span id="odoo-status-badge"
+                        style="font-size: 0.8em; padding: 2px 8px; border-radius: 12px; background: #f0f0f0; color: #666;">Не
+                        налаштовано</span>
+                </label>
                 <div class="form-group">
                     <label>Логін Odoo</label>
-                    <input type="text" id="odoo-username" placeholder="v.pupkin">
+                    <input type="text" id="odoo-username" placeholder="Enter Odoo username">
                 </div>
                 <div class="form-group">
                     <label>Пароль Odoo</label>
-                    <input type="password" id="odoo-password" placeholder="••••••••">
+                    <input type="password" id="odoo-password" placeholder="Enter Odoo password">
                 </div>
             </div>
 
@@ -1175,7 +1180,15 @@
                     document.getElementById('set-workday-start').value = state.settings.workday_start;
                     document.getElementById('set-workday-end').value = state.settings.workday_end;
                     document.getElementById('set-workday-interval').value = state.settings.workday_interval;
-                    document.getElementById('odoo-username').value = state.settings.odoo.username;
+                    if (state.settings.odoo && state.settings.odoo.url && state.settings.odoo.username) {
+                        document.getElementById('odoo-username').value = state.settings.odoo.username;
+                        // document.getElementById('odoo-password').value = '********'; // Password is not sent back for security usually, or is encrypted
+
+                        const badge = document.getElementById('odoo-status-badge');
+                        badge.textContent = '✅ Підключено';
+                        badge.style.background = '#e6f4ea';
+                        badge.style.color = '#1e8e3e';
+                    }
 
                     toggleWorkdayDetails(state.settings.workday_reminders);
 

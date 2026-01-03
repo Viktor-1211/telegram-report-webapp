@@ -843,8 +843,6 @@
         }
 
         function saveSettings() {
-            // ВАЖЛИВО: Odoo зберігається окремою кнопкою (saveOdooSettings),
-            // щоб "Зберегти всі налаштування" не перетирав пароль пустим значенням.
             const data = {
                 action: 'save_settings_v3',
                 reminder_time: document.getElementById('set-time').value,
@@ -853,7 +851,7 @@
                 workday_reminders: document.getElementById('set-workday-reminders').checked,
                 workday_start: document.getElementById('set-workday-start').value,
                 workday_end: document.getElementById('set-workday-end').value,
-                workday_interval: document.getElementById('set-workday-interval').value,
+                workday_interval: document.getElementById('set-workday-interval').value
             };
             tg.sendData(JSON.stringify(data));
         }
@@ -879,7 +877,7 @@
             };
 
             tg.sendData(JSON.stringify({
-                action: 'save_settings_v3',
+                action: 'save_odoo_settings',
                 odoo: odooPayload
             }));
         }

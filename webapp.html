@@ -24,6 +24,8 @@
             --transition: all 0.2s ease;
             --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
             --input-border: rgba(0, 0, 0, 0.05);
+            --input-border-strong: rgba(0, 0, 0, 0.18);
+            --input-bg-contrast: rgba(0, 0, 0, 0.03);
         }
 
         /* Dark Mode overrides if Telegram doesn't provide them correctly */
@@ -31,6 +33,8 @@
             :root {
                 --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
                 --input-border: rgba(255, 255, 255, 0.1);
+                --input-border-strong: rgba(255, 255, 255, 0.22);
+                --input-bg-contrast: rgba(255, 255, 255, 0.06);
             }
         }
 
@@ -164,6 +168,26 @@
             transition: var(--transition);
         }
 
+        /* Чіткий focus для полів (особливо важливо в Telegram WebApp) */
+        input:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: rgba(0, 122, 255, 0.45);
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
+        }
+
+        /* Посилена рамка саме в модалках "Звіти", щоб поля не зливалися з фоном */
+        #reports-modal input,
+        #reports-modal textarea,
+        #reports-modal select,
+        #edit-report-modal input,
+        #edit-report-modal textarea,
+        #edit-report-modal select {
+            border-color: var(--input-border-strong);
+            background: color-mix(in srgb, var(--bg-color) 92%, var(--input-bg-contrast) 8%);
+        }
+
         .btn {
             display: inline-flex;
             align-items: center;
@@ -225,33 +249,6 @@
             border: 3px solid var(--bg-color);
             cursor: pointer;
             z-index: 10;
-        }
-
-        /* Reports (Admin) — зробити поля вводу як у "Параметрах":
-           чорна/темна зона (secondary-bg) + сіре поле вводу (bg-color) */
-        #reports-modal .form-group,
-        #edit-report-modal .form-group {
-            background: var(--secondary-bg);
-            padding: 14px;
-            border-radius: 14px;
-        }
-
-        #reports-modal .form-group input,
-        #edit-report-modal .form-group input,
-        #edit-report-modal .form-group textarea,
-        #edit-report-modal .form-group select {
-            background: var(--bg-color);
-        }
-
-        /* У модалці редагування — контейнер задач темний, поля світлі */
-        #edit-report-modal .task-item {
-            background: transparent;
-            box-shadow: none;
-            border: 1px solid var(--input-border);
-        }
-
-        #edit-report-modal .btn-remove-task {
-            border: 3px solid var(--secondary-bg);
         }
 
         .switch-container {

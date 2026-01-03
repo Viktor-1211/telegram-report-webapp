@@ -227,6 +227,33 @@
             z-index: 10;
         }
 
+        /* Reports (Admin) — зробити поля вводу як у "Параметрах":
+           чорна/темна зона (secondary-bg) + сіре поле вводу (bg-color) */
+        #reports-modal .form-group,
+        #edit-report-modal .form-group {
+            background: var(--secondary-bg);
+            padding: 14px;
+            border-radius: 14px;
+        }
+
+        #reports-modal .form-group input,
+        #edit-report-modal .form-group input,
+        #edit-report-modal .form-group textarea,
+        #edit-report-modal .form-group select {
+            background: var(--bg-color);
+        }
+
+        /* У модалці редагування — контейнер задач темний, поля світлі */
+        #edit-report-modal .task-item {
+            background: transparent;
+            box-shadow: none;
+            border: 1px solid var(--input-border);
+        }
+
+        #edit-report-modal .btn-remove-task {
+            border: 3px solid var(--secondary-bg);
+        }
+
         .switch-container {
             display: flex;
             justify-content: space-between;

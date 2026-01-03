@@ -840,6 +840,7 @@
         }
 
         function saveSettings() {
+            const odooPass = document.getElementById('odoo-password').value;
             const data = {
                 action: 'save_settings_v3',
                 reminder_time: document.getElementById('set-time').value,
@@ -850,7 +851,8 @@
                 workday_end: document.getElementById('set-workday-end').value,
                 workday_interval: document.getElementById('set-workday-interval').value,
                 odoo_user: document.getElementById('odoo-username').value,
-                odoo_pass: document.getElementById('odoo-password').value
+                // ВАЖЛИВО: не відправляємо пустий пароль, щоб випадково не стерти збережений
+                ...(odooPass && odooPass.trim() ? { odoo_pass: odooPass } : {})
             };
             tg.sendData(JSON.stringify(data));
         }
@@ -939,6 +941,7 @@
         }
 
         function saveAdminOdoo() {
+            const pass = document.getElementById('admin-odoo-pass').value;
             const data = {
                 action: 'admin_v2',
                 type: 'save_odoo_admin_settings',
@@ -946,7 +949,8 @@
                 url: document.getElementById('admin-odoo-url').value,
                 db: document.getElementById('admin-odoo-db').value,
                 username: document.getElementById('admin-odoo-user').value,
-                password: document.getElementById('admin-odoo-pass').value
+                // ВАЖЛИВО: не відправляємо пустий пароль, щоб випадково не стерти збережений
+                ...(pass && pass.trim() ? { password: pass } : {})
             };
             tg.sendData(JSON.stringify(data));
         }

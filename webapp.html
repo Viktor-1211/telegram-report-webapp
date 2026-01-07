@@ -24,8 +24,6 @@
             --transition: all 0.2s ease;
             --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
             --input-border: rgba(0, 0, 0, 0.05);
-            --input-border-strong: rgba(0, 0, 0, 0.18);
-            --input-bg-contrast: rgba(0, 0, 0, 0.03);
         }
 
         /* Dark Mode overrides if Telegram doesn't provide them correctly */
@@ -33,8 +31,6 @@
             :root {
                 --card-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
                 --input-border: rgba(255, 255, 255, 0.1);
-                --input-border-strong: rgba(255, 255, 255, 0.22);
-                --input-bg-contrast: rgba(255, 255, 255, 0.06);
             }
         }
 
@@ -168,26 +164,6 @@
             transition: var(--transition);
         }
 
-        /* Чіткий focus для полів (особливо важливо в Telegram WebApp) */
-        input:focus,
-        textarea:focus,
-        select:focus {
-            outline: none;
-            border-color: rgba(0, 122, 255, 0.45);
-            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.15);
-        }
-
-        /* Посилена рамка саме в модалках "Звіти", щоб поля не зливалися з фоном */
-        #reports-modal input,
-        #reports-modal textarea,
-        #reports-modal select,
-        #edit-report-modal input,
-        #edit-report-modal textarea,
-        #edit-report-modal select {
-            border-color: var(--input-border-strong);
-            background: color-mix(in srgb, var(--bg-color) 92%, var(--input-bg-contrast) 8%);
-        }
-
         .btn {
             display: inline-flex;
             align-items: center;
@@ -300,6 +276,51 @@
         }
 
         input:checked+.slider:before {
+            transform: translateX(22px);
+        }
+
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 50px;
+            height: 28px;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+
+        .toggle-slider:before {
+            position: absolute;
+            content: "";
+            height: 20px;
+            width: 20px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: var(--accent-color);
+        }
+
+        .toggle-switch input:checked + .toggle-slider:before {
             transform: translateX(22px);
         }
 
@@ -543,13 +564,12 @@
                 </label>
                 <div class="form-group">
                     <label>Логін Odoo</label>
-                    <input type="text" id="odoo-username" placeholder="Enter Odoo login">
+                    <input type="text" id="odoo-username" placeholder="Enter Odoo username">
                 </div>
                 <div class="form-group">
                     <label>Пароль Odoo</label>
-                    <input type="password" id="odoo-password" placeholder="********">
+                    <input type="password" id="odoo-password" placeholder="Enter Odoo password">
                 </div>
-                <button class="btn btn-outline" onclick="saveOdooSettings()" style="margin-top: 12px;">Зберегти Odoo</button>
             </div>
 
             <button class="btn btn-primary" onclick="saveSettings()">Зберегти всі налаштування</button>
@@ -579,6 +599,17 @@
             </div>
 
             <div id="admin-user-list"></div>
+
+            <div class="card" style="margin-top: 24px;">
+                <label>Налаштування звітів</label>
+                <div class="form-group" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0;">
+                    <span>Показувати години в звітах</span>
+                    <label class="toggle-switch">
+                        <input type="checkbox" id="admin-show-hours" onchange="saveAdminReportSettings()">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </div>
+            </div>
 
             <div class="card" style="margin-top: 24px;">
                 <label>Повідомлення</label>
@@ -628,6 +659,10 @@
                     <label>Password</label>
                     <input type="password" id="admin-odoo-pass">
                 </div>
+                <div class="form-group">
+                    <label>Task ID (optional)</label>
+                    <input type="number" id="admin-odoo-task">
+                </div>
                 <button class="btn btn-outline" onclick="saveAdminOdoo()">Оновити Odoo</button>
             </div>
 
@@ -639,12 +674,10 @@
             <div style="display: flex; gap: 10px; margin-top: 10px;">
                 <button class="btn btn-secondary" onclick="openMessageModal('single')">📨 Надіслати
                     повідомлення</button>
-                <button class="btn btn-secondary" onclick="requestUserReports()">📋 Переглянути звіти</button>
+                <button class="btn btn-secondary" onclick="openUserReportsModal()">📋 Переглянути звіти</button>
             </div>
             <button id="btn-rename" class="btn btn-secondary" style="margin-top: 10px;"
                 onclick="adminUserRename()">Перейменувати</button>
-            <button id="btn-delete" class="btn btn-danger" style="margin-top: 10px;" onclick="deleteUser()">🗑️ Видалити
-                користувача</button>
         </div>
     </div>
 
@@ -761,9 +794,7 @@
             users: [],
             messageType: 'all',
             userReports: [],
-            editingReportId: null,
-            reportsMetadata: {},  // Метадані звітів всіх користувачів
-            apiUrl: ''  // URL API сервера
+            editingReportId: null
         };
 
         function updateDate() {
@@ -849,24 +880,9 @@
                 workday_reminders: document.getElementById('set-workday-reminders').checked,
                 workday_start: document.getElementById('set-workday-start').value,
                 workday_end: document.getElementById('set-workday-end').value,
-                workday_interval: document.getElementById('set-workday-interval').value
-            };
-            tg.sendData(JSON.stringify(data));
-        }
-
-        function saveOdooSettings() {
-            const username = document.getElementById('odoo-username').value;
-            const password = document.getElementById('odoo-password').value;
-            
-            if (!username || !password) {
-                tg.showAlert('Будь ласка, заповніть логін та пароль Odoo');
-                return;
-            }
-            
-            const data = {
-                action: 'save_odoo_credentials',
-                username: username,
-                password: password
+                workday_interval: document.getElementById('set-workday-interval').value,
+                odoo_user: document.getElementById('odoo-username').value,
+                odoo_pass: document.getElementById('odoo-password').value
             };
             tg.sendData(JSON.stringify(data));
         }
@@ -887,67 +903,19 @@
         }
 
         // Admin Functions
-        async function openUserModal(userId) {
+        function openUserModal(userId) {
             const user = state.users.find(u => u.id == userId);
             if (!user) return;
-            
             state.managingUserId = userId;
-            state.managingUser = user;
-            
-            // Показуємо модалку відразу з базовими даними
-            document.getElementById('modal-user-name').textContent = user.username || user.first_name || 'Користувач ' + userId;
+            document.getElementById('modal-user-name').textContent = user.username || 'Користувач ' + userId;
             document.getElementById('user-modal').style.display = 'flex';
 
-            // Показуємо індикатор завантаження
-            showLoadingInModal('user-modal');
-            
-            try {
-                // Завантажуємо повні дані користувача через API
-                // NOTE: API must be HTTPS (WebApp is served over HTTPS).
-                const apiUrl = state.apiUrl || state.admin?.api_url || 'https://128-140-40-178.sslip.io/api';
-                const response = await fetch(`${apiUrl}/user/${userId}/full?days=30`);
-                
-                if (!response.ok) {
-                    throw new Error(`HTTP ${response.status}`);
-                }
-                
-                const data = await response.json();
-                console.log('User full data loaded:', data);
-                
-                // Оновлюємо дані користувача в state
-                Object.assign(user, data.user);
-                state.userReports = data.reports || [];
-                
-                // Заповнюємо поля Odoo
-                document.getElementById('admin-odoo-url').value = data.user.odoo_url || '';
-                document.getElementById('admin-odoo-db').value = data.user.odoo_db || '';
-                document.getElementById('admin-odoo-user').value = data.user.odoo_user_name || '';
-                document.getElementById('admin-odoo-pass').value = '';
-                
-                hideLoadingInModal('user-modal');
-            } catch (error) {
-                console.error('Error loading user data:', error);
-                hideLoadingInModal('user-modal');
-                alert('Помилка завантаження даних користувача: ' + error.message);
-            }
-        }
-
-        function showLoadingInModal(modalId) {
-            const modal = document.getElementById(modalId);
-            const content = modal.querySelector('.modal-content');
-            if (content) {
-                content.style.opacity = '0.5';
-                content.style.pointerEvents = 'none';
-            }
-        }
-
-        function hideLoadingInModal(modalId) {
-            const modal = document.getElementById(modalId);
-            const content = modal.querySelector('.modal-content');
-            if (content) {
-                content.style.opacity = '1';
-                content.style.pointerEvents = 'auto';
-            }
+            // Populate Odoo fields if user data has them
+            document.getElementById('admin-odoo-url').value = user.odoo_url || '';
+            document.getElementById('admin-odoo-db').value = user.odoo_db || '';
+            document.getElementById('admin-odoo-user').value = user.odoo_username || '';
+            document.getElementById('admin-odoo-pass').value = user.odoo_password || '';
+            document.getElementById('admin-odoo-task').value = user.odoo_task_id || '';
         }
 
         function closeModal(e) {
@@ -962,9 +930,19 @@
                 url: document.getElementById('admin-odoo-url').value,
                 db: document.getElementById('admin-odoo-db').value,
                 username: document.getElementById('admin-odoo-user').value,
-                password: document.getElementById('admin-odoo-pass').value
+                password: document.getElementById('admin-odoo-pass').value,
+                task_id: document.getElementById('admin-odoo-task').value
             };
             tg.sendData(JSON.stringify(data));
+        }
+
+        function saveAdminReportSettings() {
+            const showHours = document.getElementById('admin-show-hours').checked;
+            tg.sendData(JSON.stringify({
+                action: 'admin_v2',
+                type: 'save_report_settings',
+                show_hours_in_reports: showHours
+            }));
         }
 
         function adminUserAction(type) {
@@ -977,7 +955,7 @@
         }
 
         function adminUserRename() {
-            const newName = prompt('Введіть нове ім\'я:', state.managingUser?.username || '');
+            const newName = prompt('Введіть нове ім\'я користувача:');
             if (newName && newName.trim()) {
                 tg.sendData(JSON.stringify({
                     action: 'admin_v2',
@@ -985,20 +963,10 @@
                     user_id: state.managingUserId,
                     new_name: newName.trim()
                 }));
+                closeModal();
             }
         }
 
-        function deleteUser() {
-            const user = state.managingUser;
-            const username = user?.username || user?.first_name || 'користувача';
-            if (confirm(`УВАГА! Ви збираєтесь ПОВНІСТЮ ВИДАЛИТИ ${username} з бази даних.\n\nЦе видалить:\n- Користувача\n- Всі його звіти\n- Налаштування Odoo\n\nПродовжити?`)) {
-                tg.sendData(JSON.stringify({
-                    action: 'admin_v2',
-                    type: 'delete_user',
-                    user_id: state.managingUserId
-                }));
-            }
-        }
         function adminAction(type) {
             tg.sendData(JSON.stringify({ action: 'admin_v2', type: type }));
         }
@@ -1053,22 +1021,6 @@
         }
 
         // Reports Functions
-        function requestUserReports() {
-            // Звіти вже завантажені при відкритті модалки користувача
-            if (!state.managingUserId) {
-                alert('Помилка: не вибрано користувача');
-                return;
-            }
-
-            if (!state.userReports || state.userReports.length === 0) {
-                alert('У цього користувача немає звітів за останні 30 днів');
-                return;
-            }
-
-            // Відкриваємо модалку зі звітами
-            openUserReportsModal();
-        }
-
         function openUserReportsModal() {
             const modal = document.getElementById('reports-modal');
             const title = document.getElementById('reports-modal-title');
@@ -1076,16 +1028,29 @@
 
             title.textContent = `Звіти: ${user?.username || 'ID: ' + state.managingUserId}`;
 
-            // Використовуємо звіти з state (вони вже завантажені)
-            const reports = state.userReports || [];
-            console.log('openUserReportsModal - reports:', reports);
+            // SPA mode: try pre-loaded reports first
+            const reports = (state.adminReports && state.adminReports[state.managingUserId]);
 
-            renderReportsList(reports);
-            modal.style.display = 'flex';
+            if (reports) {
+                loadUserReports(reports);
+                modal.style.display = 'flex';
+            } else {
+                // Fallback: Request user reports from bot (will close app)
+                tg.sendData(JSON.stringify({
+                    action: 'admin_v2',
+                    type: 'get_user_reports',
+                    user_id: state.managingUserId
+                }));
+            }
         }
 
         function closeReportsModal(e) {
             document.getElementById('reports-modal').style.display = 'none';
+        }
+
+        function loadUserReports(reports) {
+            state.userReports = reports;
+            renderReportsList(reports);
         }
 
         function renderReportsList(reports) {
@@ -1095,38 +1060,28 @@
                 return;
             }
 
-            list.innerHTML = reports.map(report => {
-                // Перевіряємо, чи є повні дані
-                const hasFullData = report.tasks && report.tasks.length > 0;
-                const taskPreview = hasFullData ? `
-                    <div style="margin-top: 8px; font-size: 13px;">
-                        ${report.tasks.slice(0, 2).map(t => 
-                            `<div style="color: var(--secondary-text);">• ${t.text || t.task || 'Без назви'}</div>`
-                        ).join('')}
-                        ${report.tasks.length > 2 ? `<div style="color: var(--secondary-text);">... та ще ${report.tasks.length - 2}</div>` : ''}
-                    </div>
-                ` : `
-                    <div style="margin-top: 8px; font-size: 12px; color: var(--secondary-text); font-style: italic;">
-                        📋 Натисніть для завантаження повних даних
-                    </div>
-                `;
-
-                return `
-                    <div class="card" onclick="openEditReportModal(${report.id})" 
-                        style="cursor: pointer; transition: var(--transition);">
-                        <div style="display: flex; justify-content: space-between; align-items: start;">
-                            <div style="flex: 1;">
-                                <div style="font-weight: 600; margin-bottom: 4px;">${report.date || 'Без дати'}</div>
-                                <div class="subtitle">${report.tasks_count || 0} завдань • ${report.total_hours || '0:00'} год</div>
-                                ${taskPreview}
-                            </div>
-                            <div style="margin-left: 12px;">
-                                <span style="font-size: 20px;">${hasFullData ? '✏️' : '📝'}</span>
-                            </div>
+            list.innerHTML = reports.map(report => `
+                <div class="card" onclick="openEditReportModal(${report.id})" 
+                    style="cursor: pointer; transition: var(--transition);">
+                    <div style="display: flex; justify-content: space-between; align-items: start;">
+                        <div style="flex: 1;">
+                            <div style="font-weight: 600; margin-bottom: 4px;">${report.date}</div>
+                            <div class="subtitle">${report.tasks_count || 0} завдань • ${report.total_hours || '0:00'} год</div>
+                            ${report.tasks ? `
+                                <div style="margin-top: 8px; font-size: 13px;">
+                                    ${report.tasks.slice(0, 2).map(t =>
+                `<div style="color: var(--secondary-text);">• ${t.text || 'Без назви'}</div>`
+            ).join('')}
+                                    ${report.tasks.length > 2 ? `<div style="color: var(--secondary-text);">... та ще ${report.tasks.length - 2}</div>` : ''}
+                                </div>
+                            ` : ''}
+                        </div>
+                        <div style="margin-left: 12px;">
+                            <span style="font-size: 20px;">📝</span>
                         </div>
                     </div>
-                `;
-            }).join('');
+                </div>
+            `).join('');
         }
 
         function filterReports() {
@@ -1135,9 +1090,7 @@
 
             const filtered = state.userReports.filter(report => {
                 const dateMatch = report.date?.toLowerCase().includes(query);
-                const tasksMatch = report.tasks?.some(t => 
-                    (t.text || t.task || '')?.toLowerCase().includes(query)
-                );
+                const tasksMatch = report.tasks?.some(t => t.text?.toLowerCase().includes(query));
                 return dateMatch || tasksMatch;
             });
 
@@ -1146,66 +1099,25 @@
 
         function renderEditTasks(tasks) {
             const tasksContainer = document.getElementById('edit-report-tasks');
-            console.log('Rendering edit tasks:', tasks);
-            
             if (tasks && tasks.length > 0) {
-                tasksContainer.innerHTML = '';
-                tasks.forEach((task, idx) => {
-                    const taskDiv = document.createElement('div');
-                    taskDiv.className = 'task-item';
-                    taskDiv.style.marginBottom = '0';
-                    
-                    // Кнопка видалення
-                    const removeBtn = document.createElement('button');
-                    removeBtn.type = 'button';
-                    removeBtn.className = 'btn-remove-task';
-                    removeBtn.textContent = '×';
-                    removeBtn.onclick = () => removeEditTask(idx);
-                    taskDiv.appendChild(removeBtn);
-                    
-                    // Textarea для тексту завдання
-                    const textarea = document.createElement('textarea');
-                    textarea.placeholder = 'Опишіть завдання...';
-                    textarea.value = task.text || '';
-                    textarea.oninput = (e) => updateEditTask(idx, 'text', e.target.value);
-                    taskDiv.appendChild(textarea);
-                    
-                    // Контейнер для годин, хвилин та статусу
-                    const inputsDiv = document.createElement('div');
-                    inputsDiv.style.cssText = 'display: flex; gap: 10px; margin-top: 12px;';
-                    
-                    // Години
-                    const hoursInput = document.createElement('input');
-                    hoursInput.type = 'number';
-                    hoursInput.placeholder = 'Год';
-                    hoursInput.style.width = '70px';
-                    hoursInput.value = task.hours || 0;
-                    hoursInput.oninput = (e) => updateEditTask(idx, 'hours', e.target.value);
-                    inputsDiv.appendChild(hoursInput);
-                    
-                    // Хвилини
-                    const minutesInput = document.createElement('input');
-                    minutesInput.type = 'number';
-                    minutesInput.placeholder = 'Хв';
-                    minutesInput.style.width = '70px';
-                    minutesInput.value = task.minutes || 0;
-                    minutesInput.oninput = (e) => updateEditTask(idx, 'minutes', e.target.value);
-                    inputsDiv.appendChild(minutesInput);
-                    
-                    // Статус
-                    const statusSelect = document.createElement('select');
-                    statusSelect.style.flex = '1';
-                    statusSelect.onchange = (e) => updateEditTask(idx, 'status', e.target.value);
-                    statusSelect.innerHTML = `
-                        <option value="completed" ${task.status === 'completed' ? 'selected' : ''}>✅ Виконано</option>
-                        <option value="in_progress" ${task.status === 'in_progress' ? 'selected' : ''}>🔄 У процесі</option>
-                        <option value="blocked" ${task.status === 'blocked' ? 'selected' : ''}>🚫 Блокери</option>
-                    `;
-                    inputsDiv.appendChild(statusSelect);
-                    
-                    taskDiv.appendChild(inputsDiv);
-                    tasksContainer.appendChild(taskDiv);
-                });
+                tasksContainer.innerHTML = tasks.map((task, idx) => `
+                    <div class="task-item" style="margin-bottom: 0;">
+                        <button type="button" class="btn-remove-task" onclick="removeEditTask(${idx})">×</button>
+                        <textarea placeholder="Опишіть завдання..." 
+                            oninput="updateEditTask(${idx}, 'text', this.value)">${task.text || ''}</textarea>
+                        <div style="display: flex; gap: 10px; margin-top: 12px;">
+                            <input type="number" placeholder="Год" style="width: 70px;" 
+                                value="${task.hours || 0}" oninput="updateEditTask(${idx}, 'hours', this.value)">
+                            <input type="number" placeholder="Хв" style="width: 70px;" 
+                                value="${task.minutes || 0}" oninput="updateEditTask(${idx}, 'minutes', this.value)">
+                            <select style="flex: 1;" onchange="updateEditTask(${idx}, 'status', this.value)">
+                                <option value="completed" ${task.status === 'completed' ? 'selected' : ''}>✅ Виконано</option>
+                                <option value="in_progress" ${task.status === 'in_progress' ? 'selected' : ''}>🔄 У процесі</option>
+                                <option value="blocked" ${task.status === 'blocked' ? 'selected' : ''}>🚫 Блокери</option>
+                            </select>
+                        </div>
+                    </div>
+                `).join('');
             } else {
                 tasksContainer.innerHTML = '<div class="subtitle">Немає завдань</div>';
             }
@@ -1217,12 +1129,8 @@
         }
 
         function removeEditTask(idx) {
-            if (state.editingTasks.length > 1) {
-                state.editingTasks.splice(idx, 1);
-                renderEditTasks(state.editingTasks);
-            } else {
-                alert('Має бути хоча б одне завдання');
-            }
+            state.editingTasks.splice(idx, 1);
+            renderEditTasks(state.editingTasks);
         }
 
         function updateEditTask(idx, field, value) {
@@ -1231,69 +1139,32 @@
 
         function openEditReportModal(reportId) {
             const report = state.userReports.find(r => r.id === reportId);
-            if (!report) {
-                console.error('Звіт не знайдено:', reportId);
-                alert('Звіт не знайдено');
-                return;
-            }
-
-            console.log('Opening edit modal for report:', report);
+            if (!report) return;
 
             state.editingReportId = reportId;
-            // Нормалізуємо формат завдань (text може бути як text так і task)
-            state.editingTasks = (report.tasks || []).map(t => ({
-                text: t.text || t.task || '',
-                hours: t.hours || t.h || 0,
-                minutes: t.minutes || t.m || 0,
-                status: t.status || 'completed'
-            }));
-
-            console.log('Normalized tasks for editing:', state.editingTasks);
+            state.editingTasks = JSON.parse(JSON.stringify(report.tasks || []));
 
             document.getElementById('edit-report-date').value = report.date || '';
             renderEditTasks(state.editingTasks);
 
-            // Закриваємо модалку зі списком звітів
-            document.getElementById('reports-modal').style.display = 'none';
-            // Відкриваємо модалку редагування
             document.getElementById('edit-report-modal').style.display = 'flex';
         }
 
         function closeEditReportModal(e) {
             document.getElementById('edit-report-modal').style.display = 'none';
-            // Якщо є звіти в state, показуємо список назад
-            if (state.userReports && state.userReports.length > 0) {
-                document.getElementById('reports-modal').style.display = 'flex';
-            }
         }
 
         function saveEditedReport() {
             const report = state.userReports.find(r => r.id === state.editingReportId);
-            if (!report) {
-                alert('Помилка: звіт не знайдено');
-                return;
-            }
+            if (!report) return;
 
             const date = document.getElementById('edit-report-date').value;
-            if (!date) {
-                alert('Будь ласка, вкажіть дату звіту');
-                return;
-            }
-
-            // Формуємо завдання в правильному форматі для бота (поле task, а не text)
-            const tasks = state.editingTasks
-                .filter(t => t.text && t.text.trim())
-                .map(t => ({
-                    task: t.text,  // Бот очікує поле 'task'
-                    hours: parseInt(t.hours) || 0,
-                    minutes: parseInt(t.minutes) || 0,
-                    status: t.status || 'completed'
-                }));
-
-            if (tasks.length === 0) {
-                alert('Додайте хоча б одне завдання');
-                return;
-            }
+            const tasks = state.editingTasks.map(t => ({
+                text: t.text,
+                hours: parseInt(t.hours) || 0,
+                minutes: parseInt(t.minutes) || 0,
+                status: t.status
+            }));
 
             tg.sendData(JSON.stringify({
                 action: 'admin_v2',
@@ -1304,28 +1175,17 @@
                 tasks: tasks
             }));
 
-            // Оновлюємо дані в state
-            report.date = date;
-            report.tasks = tasks;
-
-            // Оновлюємо список звітів
-            renderReportsList(state.userReports);
-
-            // Показуємо повідомлення
-            alert('✅ Звіт збережено!');
-
             closeEditReportModal();
         }
 
         function deleteReport() {
-            console.log('deleteReport called');
-            console.log('state.managingUserId:', state.managingUserId);
-            console.log('state.editingReportId:', state.editingReportId);
+            // Debug: check values
+            // alert(`Debug: User ${state.managingUserId}, Report ${state.editingReportId}`); // Commented out to be less annoying
 
             if (!confirm('Ви впевнені, що хочете видалити цей звіт?')) return;
 
             if (!state.managingUserId || !state.editingReportId) {
-                alert(`Помилка: не знайдено ID користувача (${state.managingUserId}) або звіту (${state.editingReportId})`);
+                alert('Помилка: не знайдено ID користувача або звіту');
                 return;
             }
 
@@ -1336,29 +1196,15 @@
                     user_id: parseInt(state.managingUserId),
                     report_id: parseInt(state.editingReportId)
                 });
-                console.log('Sending delete request:', data);
                 tg.sendData(data);
-
-                // Видаляємо звіт з локального списку
-                state.userReports = state.userReports.filter(r => r.id !== state.editingReportId);
-
-                // Оновлюємо список звітів
-                renderReportsList(state.userReports);
-
-                // Показуємо повідомлення
-                alert('🗑️ Звіт видалено!');
-
-                // Закриваємо модалку редагування і відкриваємо список
-                document.getElementById('edit-report-modal').style.display = 'none';
-                if (state.userReports.length > 0) {
-                    document.getElementById('reports-modal').style.display = 'flex';
-                } else {
-                    // Якщо звітів не залишилося, закриваємо все
-                    document.getElementById('reports-modal').style.display = 'none';
-                }
+                // tg.close(); // sendData should close it, but acts as backup
             } catch (e) {
                 alert('Помилка відправки: ' + e.message);
             }
+
+            // UI cleanup just in case app doesn't close immediately (though it should)
+            closeEditReportModal();
+            closeReportsModal();
         }
 
         document.addEventListener('DOMContentLoaded', () => {
@@ -1373,7 +1219,6 @@
 
             // Initialization via URL data
             const urlParams = new URLSearchParams(window.location.search);
-            
             const rawData = urlParams.get('data');
             if (rawData) {
                 try {
@@ -1383,7 +1228,6 @@
                     state.isAdmin = initData.is_admin;
                     state.settings = initData.settings;
                     state.users = initData.admin?.users_list || [];
-                    state.apiUrl = initData.admin?.api_url || '';  // Зберігаємо URL API
 
                     // Update UI
                     if (state.isAdmin) {
@@ -1391,7 +1235,6 @@
                         document.getElementById('admin-total-users').textContent = initData.admin?.total_users || 0;
                         document.getElementById('admin-pending-users').textContent = initData.admin?.pending_users || 0;
                         renderUserList(state.users);
-                        console.log('API URL:', state.apiUrl);
                     }
 
                     // Update Settings Tab
@@ -1401,8 +1244,13 @@
                     document.getElementById('set-workday-start').value = state.settings.workday_start;
                     document.getElementById('set-workday-end').value = state.settings.workday_end;
                     document.getElementById('set-workday-interval').value = state.settings.workday_interval;
+                    
+                    // Update Admin Settings
+                    if (state.isAdmin && state.settings.show_hours_in_reports !== undefined) {
+                        document.getElementById('admin-show-hours').checked = state.settings.show_hours_in_reports;
+                    }
                     if (state.settings.odoo && state.settings.odoo.url && state.settings.odoo.username) {
-                    document.getElementById('odoo-username').value = state.settings.odoo.username;
+                        document.getElementById('odoo-username').value = state.settings.odoo.username;
                         // document.getElementById('odoo-password').value = '********'; // Password is not sent back for security usually, or is encrypted
 
                         const badge = document.getElementById('odoo-status-badge');
@@ -1417,20 +1265,29 @@
                     // Update History
                     renderHistory(initData.history);
 
-                    // Завантажуємо метадані звітів для адміна
+                    // Admin SPA Pre-load Decompression
                     if (state.isAdmin && initData.admin?.recent_reports) {
-                        const metadata = {};
-                        for (const [uid, reports] of Object.entries(initData.admin.recent_reports)) {
-                            metadata[uid] = reports.map(r => ({
-                                id: r.i,
-                                date: r.d,
-                                tasks_count: r.tc,
-                                total_hours: r.th
-                                // БЕЗ повних текстів завдань
-                            }));
+                        try {
+                            const decompressed = {};
+                            for (const [uid, reports] of Object.entries(initData.admin.recent_reports)) {
+                                decompressed[uid] = reports.map(r => ({
+                                    id: r.i,
+                                    date: r.d,
+                                    tasks_count: r.tc,
+                                    total_hours: r.th,
+                                    tasks: r.t.map(t => ({
+                                        text: t.t,
+                                        hours: t.h,
+                                        minutes: t.m,
+                                        status: t.s === 1 ? 'completed' : 'in_progress'
+                                    }))
+                                }));
+                            }
+                            state.adminReports = decompressed;
+                        } catch (err) {
+                            console.error('Decompression error:', err);
+                            state.adminReports = {};
                         }
-                        state.reportsMetadata = metadata;
-                        console.log('Метадані звітів завантажено для', Object.keys(metadata).length, 'користувачів');
                     }
 
                 } catch (e) {
@@ -1460,14 +1317,14 @@
                 return `
                 <div class="card history-item" onclick="toggleHistory(${idx})">
                     <div style="display:flex; justify-content:space-between; align-items:center; width: 100%;">
-                    <div>
-                        <div style="font-weight:600;">${item.date}</div>
-                        <div class="subtitle">${item.tasks_count} завдань</div>
-                    </div>
+                        <div>
+                            <div style="font-weight:600;">${item.date}</div>
+                            <div class="subtitle">${item.tasks_count} завдань</div>
+                        </div>
                         <div style="text-align: right;">
-                    <div style="font-weight:700; color:var(--primary-color);">${item.hours} год</div>
+                            <div style="font-weight:700; color:var(--primary-color);">${item.hours} год</div>
                             <div style="font-size: 10px; color: var(--secondary-text);">Детальніше ▾</div>
-                </div>
+                        </div>
                     </div>
                     <div id="history-details-${idx}" class="history-details">
                         ${tasksHtml || '<div class="subtitle">Дані відсутні</div>'}

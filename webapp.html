@@ -903,19 +903,52 @@
         }
 
         // Admin Functions
-        function openUserModal(userId) {
+        async function openUserModal(userId) {
             const user = state.users.find(u => u.id == userId);
             if (!user) return;
             state.managingUserId = userId;
             document.getElementById('modal-user-name').textContent = user.username || 'Користувач ' + userId;
             document.getElementById('user-modal').style.display = 'flex';
 
-            // Populate Odoo fields if user data has them
-            document.getElementById('admin-odoo-url').value = user.odoo_url || '';
-            document.getElementById('admin-odoo-db').value = user.odoo_db || '';
-            document.getElementById('admin-odoo-user').value = user.odoo_username || '';
-            document.getElementById('admin-odoo-pass').value = user.odoo_password || '';
-            document.getElementById('admin-odoo-task').value = user.odoo_task_id || '';
+            // Очищаємо поля перед завантаженням
+            document.getElementById('admin-odoo-url').value = '';
+            document.getElementById('admin-odoo-db').value = '';
+            document.getElementById('admin-odoo-user').value = '';
+            document.getElementById('admin-odoo-pass').value = '';
+            document.getElementById('admin-odoo-task').value = '';
+
+            // Завантажуємо повні дані користувача через API
+            try {
+                const apiUrl = state.admin?.api_url || 'https://128-140-40-178.sslip.io/api';
+                const response = await fetch(`${apiUrl}/user/${userId}/full?days=30`);
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('User full data loaded:', data);
+
+                // Оновлюємо дані користувача в state
+                Object.assign(user, data.user);
+                state.userReports = data.reports || [];
+
+                // Заповнюємо поля Odoo
+                document.getElementById('admin-odoo-url').value = data.user.odoo_url || '';
+                document.getElementById('admin-odoo-db').value = data.user.odoo_db || '';
+                document.getElementById('admin-odoo-user').value = data.user.odoo_user_name || '';
+                document.getElementById('admin-odoo-pass').value = ''; // Пароль не повертається з API
+                document.getElementById('admin-odoo-task').value = data.user.odoo_task_id || '';
+            } catch (error) {
+                console.error('Error loading user data:', error);
+                // Якщо API не працює, використовуємо дані зі state (якщо є)
+                if (user.odoo_url) {
+                    document.getElementById('admin-odoo-url').value = user.odoo_url || '';
+                    document.getElementById('admin-odoo-db').value = user.odoo_db || '';
+                    document.getElementById('admin-odoo-user').value = user.odoo_username || '';
+                    document.getElementById('admin-odoo-task').value = user.odoo_task_id || '';
+                }
+            }
         }
 
         function closeModal(e) {
@@ -1228,6 +1261,7 @@
                     state.isAdmin = initData.is_admin;
                     state.settings = initData.settings;
                     state.users = initData.admin?.users_list || [];
+                    state.admin = initData.admin || {};
 
                     // Update UI
                     if (state.isAdmin) {

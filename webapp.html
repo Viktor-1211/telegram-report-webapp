@@ -783,13 +783,67 @@
 
     <script>
         const tg = window.Telegram.WebApp;
-        tg.expand();
-        tg.enableClosingConfirmation();
         
-        // Перехоплюємо tg.sendData ПІСЛЯ ініціалізації tg - АГРЕСИВНЕ ПЕРЕХОПЛЕННЯ
-        console.log('[INIT] Перехоплення tg.sendData...');
+        // КРИТИЧНО: Перехоплюємо tg.sendData ДУЖЕ РАНО, ДО будь-яких інших операцій
+        console.log('[INIT] Перехоплення tg.sendData (ДУЖЕ РАНО)...');
         console.log('[INIT] tg:', tg);
         console.log('[INIT] tg.sendData:', tg?.sendData);
+        
+        if (tg && tg.sendData) {
+            const originalSendData = tg.sendData.bind(tg);
+            console.log('[INIT] originalSendData збережено:', typeof originalSendData);
+            
+            // Перехоплюємо через Object.defineProperty для гарантії
+            try {
+                Object.defineProperty(tg, 'sendData', {
+                    value: function(data) {
+                        try {
+                            const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+                            console.log('[INTERCEPTOR] tg.sendData called:', parsed);
+                            console.trace('[INTERCEPTOR] Stack trace:');
+                            
+                            // Блокуємо виклик get_user_reports, щоб не закривався веб-ап
+                            if (parsed && parsed.action === 'admin_v2' && parsed.type === 'get_user_reports') {
+                                console.error('[BLOCKED] ⛔ get_user_reports - використовуємо API замість цього');
+                                console.trace('[BLOCKED] Stack trace:');
+                                // НЕ викликаємо openUserReportsModal тут, бо це може викликати цикл
+                                // Просто блокуємо виклик
+                                return undefined; // Не викликаємо originalSendData
+                            }
+                            return originalSendData(data);
+                        } catch (e) {
+                            console.error('[INTERCEPTOR] Error in tg.sendData interceptor:', e);
+                            return originalSendData(data);
+                        }
+                    },
+                    writable: false,
+                    configurable: false
+                });
+                console.log('[INIT] ✅ tg.sendData перехоплено успішно через Object.defineProperty');
+                console.log('[INIT] Перевірка: tg.sendData після перехоплення:', typeof tg.sendData);
+            } catch (e) {
+                console.error('[INIT] ❌ Помилка при перехопленні через Object.defineProperty:', e);
+                // Fallback: спробуємо просто перезаписати
+                tg.sendData = function(data) {
+                    try {
+                        const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+                        if (parsed && parsed.action === 'admin_v2' && parsed.type === 'get_user_reports') {
+                            console.error('[BLOCKED FALLBACK] ⛔ get_user_reports - використовуємо API');
+                            return undefined;
+                        }
+                        return originalSendData(data);
+                    } catch (e) {
+                        return originalSendData(data);
+                    }
+                };
+                console.log('[INIT] ✅ tg.sendData перехоплено через fallback метод');
+            }
+        } else {
+            console.error('[INIT] ❌ Помилка: tg або tg.sendData не знайдено');
+        }
+        
+        tg.expand();
+        tg.enableClosingConfirmation();
         
         if (tg && tg.sendData) {
             const originalSendData = tg.sendData.bind(tg);

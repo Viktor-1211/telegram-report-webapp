@@ -1247,11 +1247,12 @@
                         <div style="flex: 1;">
                             <div style="font-weight: 600; margin-bottom: 4px;">${report.date}</div>
                             <div class="subtitle">${report.tasks_count || 0} завдань • ${report.total_hours || '0:00'} год</div>
-                            ${report.tasks ? `
+                            ${report.tasks && report.tasks.length > 0 ? `
                                 <div style="margin-top: 8px; font-size: 13px;">
-                                    ${report.tasks.slice(0, 2).map(t =>
-                `<div style="color: var(--secondary-text);">• ${t.text || 'Без назви'}</div>`
-            ).join('')}
+                                    ${report.tasks.slice(0, 2).map(t => {
+                                        const taskText = t.text || t.task || 'Без назви';
+                                        return `<div style="color: var(--secondary-text);">• ${taskText}</div>`;
+                                    }).join('')}
                                     ${report.tasks.length > 2 ? `<div style="color: var(--secondary-text);">... та ще ${report.tasks.length - 2}</div>` : ''}
                                 </div>
                             ` : ''}
@@ -1489,9 +1490,12 @@
             }
             list.innerHTML = history.map((item, idx) => {
                 const tasksHtml = (item.tasks || []).map(t => {
-                    const taskText = t.t || '';
-                    const emoji = t.s === 'completed' ? '✅' : (t.s === 'blocked' ? '🚫' : '🔄');
-                    const time = (t.h || t.m) ? ` (${t.h || 0}г ${t.m || 0}хв)` : '';
+                    // Підтримуємо обидва формати: стиснений (t.t) та повний (t.text або t.task)
+                    const taskText = t.t || t.text || t.task || '';
+                    const emoji = t.s === 'completed' || t.s === 1 ? '✅' : (t.s === 'blocked' ? '🚫' : '🔄');
+                    const hours = t.h || 0;
+                    const minutes = t.m || 0;
+                    const time = (hours || minutes) ? ` (${hours}г ${minutes}хв)` : '';
                     return `<div class="history-task"><span>${emoji}</span><span>${taskText}${time}</span></div>`;
                 }).join('');
 

@@ -1051,7 +1051,12 @@
                     date: r.date || '',
                     tasks_count: r.tasks_count || 0,
                     total_hours: r.total_hours || '0:00',
-                    tasks: r.tasks || []
+                    tasks: (r.tasks || []).map(t => ({
+                        text: t.task || t.text || '', // API повертає 'task', але ми використовуємо 'text'
+                        hours: t.hours || 0,
+                        minutes: t.minutes || 0,
+                        status: t.status || 'completed'
+                    }))
                 }));
 
                 // Заповнюємо поля Odoo
@@ -1245,7 +1250,12 @@
                     date: r.date || '',
                     tasks_count: r.tasks_count || 0,
                     total_hours: r.total_hours || '0:00',
-                    tasks: r.tasks || []
+                    tasks: (r.tasks || []).map(t => ({
+                        text: t.task || t.text || '', // API повертає 'task', але ми використовуємо 'text'
+                        hours: t.hours || 0,
+                        minutes: t.minutes || 0,
+                        status: t.status || 'completed'
+                    }))
                 }));
 
                 // Зберігаємо в state для подальшого використання

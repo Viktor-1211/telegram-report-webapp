@@ -785,6 +785,64 @@
         const tg = window.Telegram.WebApp;
         tg.expand();
         tg.enableClosingConfirmation();
+        
+        // Перехоплюємо tg.sendData ПІСЛЯ ініціалізації tg - АГРЕСИВНЕ ПЕРЕХОПЛЕННЯ
+        console.log('[INIT] Перехоплення tg.sendData...');
+        console.log('[INIT] tg:', tg);
+        console.log('[INIT] tg.sendData:', tg?.sendData);
+        
+        if (tg && tg.sendData) {
+            const originalSendData = tg.sendData.bind(tg);
+            console.log('[INIT] originalSendData збережено:', typeof originalSendData);
+            
+            // Перехоплюємо через Object.defineProperty для гарантії
+            try {
+                Object.defineProperty(tg, 'sendData', {
+                    value: function(data) {
+                        try {
+                            const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+                            console.log('[INTERCEPTOR] tg.sendData called:', parsed);
+                            console.trace('[INTERCEPTOR] Stack trace:');
+                            
+                            // Блокуємо виклик get_user_reports, щоб не закривався веб-ап
+                            if (parsed && parsed.action === 'admin_v2' && parsed.type === 'get_user_reports') {
+                                console.error('[BLOCKED] ⛔ get_user_reports - використовуємо API замість цього');
+                                console.trace('[BLOCKED] Stack trace:');
+                                // НЕ викликаємо openUserReportsModal тут, бо це може викликати цикл
+                                // Просто блокуємо виклик
+                                return undefined; // Не викликаємо originalSendData
+                            }
+                            return originalSendData(data);
+                        } catch (e) {
+                            console.error('[INTERCEPTOR] Error in tg.sendData interceptor:', e);
+                            return originalSendData(data);
+                        }
+                    },
+                    writable: false,
+                    configurable: false
+                });
+                console.log('[INIT] ✅ tg.sendData перехоплено успішно через Object.defineProperty');
+                console.log('[INIT] Перевірка: tg.sendData після перехоплення:', typeof tg.sendData);
+            } catch (e) {
+                console.error('[INIT] ❌ Помилка при перехопленні через Object.defineProperty:', e);
+                // Fallback: спробуємо просто перезаписати
+                tg.sendData = function(data) {
+                    try {
+                        const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+                        if (parsed && parsed.action === 'admin_v2' && parsed.type === 'get_user_reports') {
+                            console.error('[BLOCKED FALLBACK] ⛔ get_user_reports - використовуємо API');
+                            return undefined;
+                        }
+                        return originalSendData(data);
+                    } catch (e) {
+                        return originalSendData(data);
+                    }
+                };
+                console.log('[INIT] ✅ tg.sendData перехоплено через fallback метод');
+            }
+        } else {
+            console.error('[INIT] ❌ Помилка: tg або tg.sendData не знайдено');
+        }
 
         let state = {
             isAdmin: false,
@@ -931,7 +989,16 @@
 
                 // Оновлюємо дані користувача в state
                 Object.assign(user, data.user);
-                state.userReports = data.reports || [];
+                // Зберігаємо звіти в state для подальшого використання
+                // Конвертуємо дані в потрібний формат
+                const reports = data.reports || [];
+                state.userReports = reports.map(r => ({
+                    id: r.id,
+                    date: r.date || '',
+                    tasks_count: r.tasks_count || 0,
+                    total_hours: r.total_hours || '0:00',
+                    tasks: r.tasks || []
+                }));
 
                 // Заповнюємо поля Odoo
                 document.getElementById('admin-odoo-url').value = data.user.odoo_url || '';
@@ -943,10 +1010,10 @@
                 console.error('Error loading user data:', error);
                 // Якщо API не працює, використовуємо дані зі state (якщо є)
                 if (user.odoo_url) {
-                    document.getElementById('admin-odoo-url').value = user.odoo_url || '';
-                    document.getElementById('admin-odoo-db').value = user.odoo_db || '';
-                    document.getElementById('admin-odoo-user').value = user.odoo_username || '';
-                    document.getElementById('admin-odoo-task').value = user.odoo_task_id || '';
+            document.getElementById('admin-odoo-url').value = user.odoo_url || '';
+            document.getElementById('admin-odoo-db').value = user.odoo_db || '';
+            document.getElementById('admin-odoo-user').value = user.odoo_username || '';
+            document.getElementById('admin-odoo-task').value = user.odoo_task_id || '';
                 }
             }
         }
@@ -1054,26 +1121,88 @@
         }
 
         // Reports Functions
-        function openUserReportsModal() {
+        async function openUserReportsModal() {
+            // Запобігаємо закриттю веб-апу - не використовуємо tg.sendData
+            console.log('[WEBAPP] ===== openUserReportsModal called =====');
+            console.log('[WEBAPP] managingUserId:', state.managingUserId);
+            console.log('[WEBAPP] userReports in state:', state.userReports);
+            console.trace('[WEBAPP] Stack trace:');
+            
+            // КРИТИЧНО: Блокуємо будь-які виклики tg.sendData з get_user_reports
+            // Якщо хтось намагається викликати tg.sendData з get_user_reports, ми блокуємо це
+            const originalSendData = tg.sendData;
+            tg.sendData = function(data) {
+                try {
+                    const parsed = typeof data === 'string' ? JSON.parse(data) : data;
+                    if (parsed && parsed.action === 'admin_v2' && parsed.type === 'get_user_reports') {
+                        console.warn('[BLOCKED IN openUserReportsModal] get_user_reports - використовуємо API');
+                        return; // Блокуємо виклик
+                    }
+                    return originalSendData.call(this, data);
+                } catch (e) {
+                    return originalSendData.call(this, data);
+                }
+            };
+            
+            if (!state.managingUserId) {
+                alert('Помилка: не вибрано користувача');
+                // Відновлюємо originalSendData
+                tg.sendData = originalSendData;
+                return;
+            }
+            
             const modal = document.getElementById('reports-modal');
             const title = document.getElementById('reports-modal-title');
             const user = state.users.find(u => u.id == state.managingUserId);
 
             title.textContent = `Звіти: ${user?.username || 'ID: ' + state.managingUserId}`;
+            
+            // Показуємо модальне вікно одразу
+            modal.style.display = 'flex';
+            const list = document.getElementById('reports-list');
+            
+            // Перевіряємо, чи вже є звіти в state (завантажені при відкритті модального вікна користувача)
+            if (state.userReports && state.userReports.length > 0) {
+                console.log('Using cached reports from state');
+                // Використовуємо вже завантажені звіти
+                loadUserReports(state.userReports);
+                return;
+            }
+            
+            console.log('Loading reports via API');
+            list.innerHTML = '<div class="subtitle" style="text-align:center; padding: 20px;">Завантаження...</div>';
 
-            // SPA mode: try pre-loaded reports first
-            const reports = (state.adminReports && state.adminReports[state.managingUserId]);
+            // Завантажуємо через API
+            try {
+                const apiUrl = state.admin?.api_url || 'https://128-140-40-178.sslip.io/api';
+                const response = await fetch(`${apiUrl}/user/${state.managingUserId}/reports?days=30`);
 
-            if (reports) {
-                loadUserReports(reports);
-                modal.style.display = 'flex';
-            } else {
-                // Fallback: Request user reports from bot (will close app)
-                tg.sendData(JSON.stringify({
-                    action: 'admin_v2',
-                    type: 'get_user_reports',
-                    user_id: state.managingUserId
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+                console.log('User reports loaded:', data);
+
+                // Конвертуємо дані в потрібний формат
+                const reports = data.reports || [];
+                const formattedReports = reports.map(r => ({
+                    id: r.id,
+                    date: r.date || '',
+                    tasks_count: r.tasks_count || 0,
+                    total_hours: r.total_hours || '0:00',
+                    tasks: r.tasks || []
                 }));
+
+                // Зберігаємо в state для подальшого використання
+                state.userReports = formattedReports;
+                loadUserReports(formattedReports);
+            } catch (error) {
+                console.error('Error loading user reports:', error);
+                list.innerHTML = '<div class="subtitle" style="text-align:center; padding: 20px; color: var(--error-color);">Помилка завантаження звітів</div>';
+            } finally {
+                // Відновлюємо originalSendData після завершення
+                // (але перехоплення на рівні глобального tg все ще працює)
             }
         }
 
@@ -1284,7 +1413,7 @@
                         document.getElementById('admin-show-hours').checked = state.settings.show_hours_in_reports;
                     }
                     if (state.settings.odoo && state.settings.odoo.url && state.settings.odoo.username) {
-                        document.getElementById('odoo-username').value = state.settings.odoo.username;
+                    document.getElementById('odoo-username').value = state.settings.odoo.username;
                         // document.getElementById('odoo-password').value = '********'; // Password is not sent back for security usually, or is encrypted
 
                         const badge = document.getElementById('odoo-status-badge');
@@ -1351,14 +1480,14 @@
                 return `
                 <div class="card history-item" onclick="toggleHistory(${idx})">
                     <div style="display:flex; justify-content:space-between; align-items:center; width: 100%;">
-                        <div>
-                            <div style="font-weight:600;">${item.date}</div>
-                            <div class="subtitle">${item.tasks_count} завдань</div>
-                        </div>
+                    <div>
+                        <div style="font-weight:600;">${item.date}</div>
+                        <div class="subtitle">${item.tasks_count} завдань</div>
+                    </div>
                         <div style="text-align: right;">
-                            <div style="font-weight:700; color:var(--primary-color);">${item.hours} год</div>
+                    <div style="font-weight:700; color:var(--primary-color);">${item.hours} год</div>
                             <div style="font-size: 10px; color: var(--secondary-text);">Детальніше ▾</div>
-                        </div>
+                </div>
                     </div>
                     <div id="history-details-${idx}" class="history-details">
                         ${tasksHtml || '<div class="subtitle">Дані відсутні</div>'}

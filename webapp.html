@@ -779,10 +779,6 @@
             <span class="nav-icon">🔐</span>
             <span>Адмін</span>
         </a>
-        <a href="#" class="nav-item" onclick="openBot(); return false;">
-            <span class="nav-icon">📊</span>
-            <span>Reports</span>
-        </a>
     </nav>
 
     <script>
@@ -855,18 +851,6 @@
         
         tg.expand();
         tg.enableClosingConfirmation();
-
-        // Функція для відкриття бота
-        function openBot() {
-            try {
-                // Відкриваємо бота через Telegram
-                tg.openTelegramLink('https://t.me/my_daily_reports_2025_bot');
-            } catch (e) {
-                console.error('Помилка відкриття бота:', e);
-                // Fallback: відкриваємо в новому вікні
-                window.open('https://t.me/my_daily_reports_2025_bot', '_blank');
-            }
-        }
 
         let state = {
             isAdmin: false,

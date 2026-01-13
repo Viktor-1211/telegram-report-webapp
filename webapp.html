@@ -1388,7 +1388,7 @@
             closeReportsModal();
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
+        document.addEventListener('DOMContentLoaded', async () => {
             tg.ready();
             updateDate();
             renderTasks();
@@ -1401,84 +1401,131 @@
             // Initialization via URL data
             const urlParams = new URLSearchParams(window.location.search);
             const rawData = urlParams.get('data');
+            
+            // Функція для ініціалізації даних
+            async function initializeApp(initData) {
+                console.log('Ініціалізація даними:', initData);
+
+                state.isAdmin = initData.is_admin;
+                state.settings = initData.settings;
+                state.users = initData.admin?.users_list || [];
+                state.admin = initData.admin || {};
+
+                // Update UI
+                if (state.isAdmin) {
+                    document.getElementById('nav-admin').style.display = 'flex';
+                    document.getElementById('admin-total-users').textContent = initData.admin?.total_users || 0;
+                    document.getElementById('admin-pending-users').textContent = initData.admin?.pending_users || 0;
+                    renderUserList(state.users);
+                }
+
+                // Update Settings Tab
+                document.getElementById('set-time').value = state.settings.reminder_time;
+                document.getElementById('set-daily-reminders').checked = state.settings.daily_reminders;
+                document.getElementById('set-workday-reminders').checked = state.settings.workday_reminders;
+                document.getElementById('set-workday-start').value = state.settings.workday_start;
+                document.getElementById('set-workday-end').value = state.settings.workday_end;
+                document.getElementById('set-workday-interval').value = state.settings.workday_interval;
+                
+                // Update Admin Settings
+                if (state.isAdmin && state.settings.show_hours_in_reports !== undefined) {
+                    document.getElementById('admin-show-hours').checked = state.settings.show_hours_in_reports;
+                }
+                if (state.settings.odoo && state.settings.odoo.url && state.settings.odoo.username) {
+                    document.getElementById('odoo-username').value = state.settings.odoo.username;
+                    // document.getElementById('odoo-password').value = '********'; // Password is not sent back for security usually, or is encrypted
+
+                    const badge = document.getElementById('odoo-status-badge');
+                    badge.textContent = '✅ Підключено';
+                    badge.style.background = '#e6f4ea';
+                    badge.style.color = '#1e8e3e';
+                }
+
+                toggleWorkdayDetails(state.settings.workday_reminders);
+
+                // Update History
+                renderHistory(initData.history);
+
+                // Admin SPA Pre-load Decompression
+                if (state.isAdmin && initData.admin?.recent_reports) {
+                    try {
+                        const decompressed = {};
+                        for (const [uid, reports] of Object.entries(initData.admin.recent_reports)) {
+                            decompressed[uid] = reports.map(r => ({
+                                id: r.i,
+                                date: r.d,
+                                tasks_count: r.tc,
+                                total_hours: r.th,
+                                tasks: r.t.map(t => ({
+                                    text: t.t,
+                                    hours: t.h,
+                                    minutes: t.m,
+                                    status: t.s === 1 ? 'completed' : 'in_progress'
+                                }))
+                            }));
+                        }
+                        state.adminReports = decompressed;
+                    } catch (err) {
+                        console.error('Decompression error:', err);
+                        state.adminReports = {};
+                    }
+                }
+            }
+            
             if (rawData) {
+                // Дані передані через URL (відкриття через бота)
                 try {
                     const initData = JSON.parse(decodeURIComponent(rawData));
-                    console.log('Ініціалізація даними:', initData);
-
-                    state.isAdmin = initData.is_admin;
-                    state.settings = initData.settings;
-                    state.users = initData.admin?.users_list || [];
-                    state.admin = initData.admin || {};
-
-                    // Update UI
-                    if (state.isAdmin) {
-                        document.getElementById('nav-admin').style.display = 'flex';
-                        document.getElementById('admin-total-users').textContent = initData.admin?.total_users || 0;
-                        document.getElementById('admin-pending-users').textContent = initData.admin?.pending_users || 0;
-                        renderUserList(state.users);
-                    }
-
-                    // Update Settings Tab
-                    document.getElementById('set-time').value = state.settings.reminder_time;
-                    document.getElementById('set-daily-reminders').checked = state.settings.daily_reminders;
-                    document.getElementById('set-workday-reminders').checked = state.settings.workday_reminders;
-                    document.getElementById('set-workday-start').value = state.settings.workday_start;
-                    document.getElementById('set-workday-end').value = state.settings.workday_end;
-                    document.getElementById('set-workday-interval').value = state.settings.workday_interval;
-                    
-                    // Update Admin Settings
-                    if (state.isAdmin && state.settings.show_hours_in_reports !== undefined) {
-                        document.getElementById('admin-show-hours').checked = state.settings.show_hours_in_reports;
-                    }
-                    if (state.settings.odoo && state.settings.odoo.url && state.settings.odoo.username) {
-                    document.getElementById('odoo-username').value = state.settings.odoo.username;
-                        // document.getElementById('odoo-password').value = '********'; // Password is not sent back for security usually, or is encrypted
-
-                        const badge = document.getElementById('odoo-status-badge');
-                        badge.textContent = '✅ Підключено';
-                        badge.style.background = '#e6f4ea';
-                        badge.style.color = '#1e8e3e';
-                    }
-
-                    toggleWorkdayDetails(state.settings.workday_reminders);
-
-
-                    // Update History
-                    renderHistory(initData.history);
-
-                    // Admin SPA Pre-load Decompression
-                    if (state.isAdmin && initData.admin?.recent_reports) {
-                        try {
-                            const decompressed = {};
-                            for (const [uid, reports] of Object.entries(initData.admin.recent_reports)) {
-                                decompressed[uid] = reports.map(r => ({
-                                    id: r.i,
-                                    date: r.d,
-                                    tasks_count: r.tc,
-                                    total_hours: r.th,
-                                    tasks: r.t.map(t => ({
-                                        text: t.t,
-                                        hours: t.h,
-                                        minutes: t.m,
-                                        status: t.s === 1 ? 'completed' : 'in_progress'
-                                    }))
-                                }));
-                            }
-                            state.adminReports = decompressed;
-                        } catch (err) {
-                            console.error('Decompression error:', err);
-                            state.adminReports = {};
-                        }
-                    }
-
+                    await initializeApp(initData);
                 } catch (e) {
                     console.error('Помилка парсингу init data:', e);
                 }
+            } else {
+                // Дані не передані через URL - спробуємо отримати через Telegram WebApp API
+                console.log('Дані не передані через URL, перевіряємо tg.initDataUnsafe...');
+                const userId = tg?.initDataUnsafe?.user?.id;
+                
+                if (userId) {
+                    console.log(`Знайдено user_id через Telegram WebApp API: ${userId}`);
+                    // Отримуємо дані через API
+                    const apiUrl = 'https://128-140-40-178.sslip.io/api';
+                    try {
+                        const response = await fetch(`${apiUrl}/user/${userId}/full?days=30`);
+                        if (response.ok) {
+                            const apiData = await response.json();
+                            console.log('Отримано дані з API:', apiData);
+                            
+                            // Форматуємо дані в формат, який очікує initializeApp
+                            const initData = {
+                                is_admin: apiData.is_admin || false,
+                                settings: apiData.settings || {},
+                                admin: apiData.admin || {},
+                                history: apiData.history || []
+                            };
+                            
+                            await initializeApp(initData);
+                            // Приховуємо loading після успішної ініціалізації
+                            document.getElementById('loading').style.display = 'none';
+                        } else {
+                            console.error('Помилка отримання даних з API:', response.status, response.statusText);
+                            document.getElementById('loading').innerHTML = '<div style="text-align:center; padding: 20px; color: var(--error-color);">❌ Помилка завантаження даних</div>';
+                        }
+                    } catch (e) {
+                        console.error('Помилка запиту до API:', e);
+                        document.getElementById('loading').innerHTML = '<div style="text-align:center; padding: 20px; color: var(--error-color);">❌ Помилка підключення до сервера</div>';
+                    }
+                } else {
+                    console.warn('Не вдалося отримати user_id з tg.initDataUnsafe');
+                    document.getElementById('loading').innerHTML = '<div style="text-align:center; padding: 20px; color: var(--error-color);">❌ Не вдалося ідентифікувати користувача</div>';
+                }
             }
 
+            // Приховуємо loading після ініціалізації (якщо ще не приховано)
             setTimeout(() => {
-                document.getElementById('loading').style.display = 'none';
+                const loadingEl = document.getElementById('loading');
+                if (loadingEl && loadingEl.style.display !== 'none') {
+                    loadingEl.style.display = 'none';
+                }
             }, 800);
         });
 

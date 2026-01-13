@@ -1337,15 +1337,31 @@
 
         function saveEditedReport() {
             const report = state.userReports.find(r => r.id === state.editingReportId);
-            if (!report) return;
+            if (!report) {
+                alert('Помилка: звіт не знайдено');
+                return;
+            }
 
             const date = document.getElementById('edit-report-date').value;
-            const tasks = state.editingTasks.map(t => ({
-                text: t.text,
-                hours: parseInt(t.hours) || 0,
-                minutes: parseInt(t.minutes) || 0,
-                status: t.status
-            }));
+            if (!date) {
+                alert('Будь ласка, вкажіть дату звіту');
+                return;
+            }
+
+            // Формуємо завдання в правильному форматі для бота (поле task, а не text)
+            const tasks = state.editingTasks
+                .filter(t => t.text && t.text.trim()) // Фільтруємо порожні завдання
+                .map(t => ({
+                    task: t.text,  // Бот очікує поле 'task'
+                    hours: parseInt(t.hours) || 0,
+                    minutes: parseInt(t.minutes) || 0,
+                    status: t.status || 'completed'
+                }));
+
+            if (tasks.length === 0) {
+                alert('Додайте хоча б одне завдання');
+                return;
+            }
 
             tg.sendData(JSON.stringify({
                 action: 'admin_v2',
@@ -1354,6 +1370,15 @@
                 report_id: state.editingReportId,
                 date: date,
                 tasks: tasks
+            }));
+
+            // Оновлюємо дані в state
+            report.date = date;
+            report.tasks = tasks.map(t => ({
+                text: t.task, // Для відображення використовуємо text
+                hours: t.hours,
+                minutes: t.minutes,
+                status: t.status
             }));
 
             closeEditReportModal();

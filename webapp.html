@@ -779,6 +779,10 @@
             <span class="nav-icon">🔐</span>
             <span>Адмін</span>
         </a>
+        <a href="#" class="nav-item" onclick="openBot(); return false;">
+            <span class="nav-icon">📊</span>
+            <span>Reports</span>
+        </a>
     </nav>
 
     <script>
@@ -851,6 +855,18 @@
         
         tg.expand();
         tg.enableClosingConfirmation();
+
+        // Функція для відкриття бота
+        function openBot() {
+            try {
+                // Відкриваємо бота через Telegram
+                tg.openTelegramLink('https://t.me/my_daily_reports_2025_bot');
+            } catch (e) {
+                console.error('Помилка відкриття бота:', e);
+                // Fallback: відкриваємо в новому вікні
+                window.open('https://t.me/my_daily_reports_2025_bot', '_blank');
+            }
+        }
 
         let state = {
             isAdmin: false,
@@ -1429,28 +1445,28 @@
             
             // Функція для ініціалізації даних
             async function initializeApp(initData) {
-                console.log('Ініціалізація даними:', initData);
+                    console.log('Ініціалізація даними:', initData);
 
-                state.isAdmin = initData.is_admin;
-                state.settings = initData.settings;
-                state.users = initData.admin?.users_list || [];
+                    state.isAdmin = initData.is_admin;
+                    state.settings = initData.settings;
+                    state.users = initData.admin?.users_list || [];
                 state.admin = initData.admin || {};
 
-                // Update UI
-                if (state.isAdmin) {
-                    document.getElementById('nav-admin').style.display = 'flex';
+                    // Update UI
+                    if (state.isAdmin) {
+                        document.getElementById('nav-admin').style.display = 'flex';
                     document.getElementById('admin-total-users').textContent = initData.admin?.total_users || 0;
                     document.getElementById('admin-pending-users').textContent = initData.admin?.pending_users || 0;
-                    renderUserList(state.users);
-                }
+                        renderUserList(state.users);
+                    }
 
-                // Update Settings Tab
-                document.getElementById('set-time').value = state.settings.reminder_time;
-                document.getElementById('set-daily-reminders').checked = state.settings.daily_reminders;
-                document.getElementById('set-workday-reminders').checked = state.settings.workday_reminders;
-                document.getElementById('set-workday-start').value = state.settings.workday_start;
-                document.getElementById('set-workday-end').value = state.settings.workday_end;
-                document.getElementById('set-workday-interval').value = state.settings.workday_interval;
+                    // Update Settings Tab
+                    document.getElementById('set-time').value = state.settings.reminder_time;
+                    document.getElementById('set-daily-reminders').checked = state.settings.daily_reminders;
+                    document.getElementById('set-workday-reminders').checked = state.settings.workday_reminders;
+                    document.getElementById('set-workday-start').value = state.settings.workday_start;
+                    document.getElementById('set-workday-end').value = state.settings.workday_end;
+                    document.getElementById('set-workday-interval').value = state.settings.workday_interval;
                 
                 // Update Admin Settings
                 if (state.isAdmin && state.settings.show_hours_in_reports !== undefined) {
@@ -1466,10 +1482,10 @@
                     badge.style.color = '#1e8e3e';
                 }
 
-                toggleWorkdayDetails(state.settings.workday_reminders);
+                    toggleWorkdayDetails(state.settings.workday_reminders);
 
-                // Update History
-                renderHistory(initData.history);
+                    // Update History
+                    renderHistory(initData.history);
 
                 // Admin SPA Pre-load Decompression
                 if (state.isAdmin && initData.admin?.recent_reports) {

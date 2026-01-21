@@ -316,11 +316,11 @@
             border-radius: 50%;
         }
 
-        .toggle-switch input:checked + .toggle-slider {
+        .toggle-switch input:checked+.toggle-slider {
             background-color: var(--accent-color);
         }
 
-        .toggle-switch input:checked + .toggle-slider:before {
+        .toggle-switch input:checked+.toggle-slider:before {
             transform: translateX(22px);
         }
 
@@ -602,7 +602,8 @@
 
             <div class="card" style="margin-top: 24px;">
                 <label>Налаштування звітів</label>
-                <div class="form-group" style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0;">
+                <div class="form-group"
+                    style="display: flex; justify-content: space-between; align-items: center; padding: 10px 0;">
                     <span>Показувати години в звітах</span>
                     <label class="toggle-switch">
                         <input type="checkbox" id="admin-show-hours" onchange="saveAdminReportSettings()">
@@ -783,16 +784,16 @@
 
     <script>
         const tg = window.Telegram.WebApp;
-        
+
         // КРИТИЧНО: Перехоплюємо tg.sendData ДУЖЕ РАНО, ДО будь-яких інших операцій
         console.log('[INIT] Перехоплення tg.sendData (ДУЖЕ РАНО)...');
         console.log('[INIT] tg:', tg);
         console.log('[INIT] tg.sendData:', tg?.sendData);
-        
+
         if (tg && tg.sendData) {
             const originalSendData = tg.sendData.bind(tg);
             console.log('[INIT] originalSendData збережено:', typeof originalSendData);
-            
+
             // Перехоплюємо через Object.defineProperty для гарантії
             try {
                 // Спробуємо видалити властивість перед перевизначенням (якщо можливо)
@@ -801,14 +802,14 @@
                 } catch (e) {
                     // Ігноруємо помилку видалення
                 }
-                
+
                 Object.defineProperty(tg, 'sendData', {
-                    value: function(data) {
+                    value: function (data) {
                         try {
                             const parsed = typeof data === 'string' ? JSON.parse(data) : data;
                             console.log('[INTERCEPTOR] tg.sendData called:', parsed);
                             console.trace('[INTERCEPTOR] Stack trace:');
-                            
+
                             // Блокуємо виклик get_user_reports, щоб не закривався веб-ап
                             if (parsed && parsed.action === 'admin_v2' && parsed.type === 'get_user_reports') {
                                 console.error('[BLOCKED] ⛔ get_user_reports - використовуємо API замість цього');
@@ -831,7 +832,7 @@
             } catch (e) {
                 console.error('[INIT] ❌ Помилка при перехопленні через Object.defineProperty:', e);
                 // Fallback: спробуємо просто перезаписати
-                tg.sendData = function(data) {
+                tg.sendData = function (data) {
                     try {
                         const parsed = typeof data === 'string' ? JSON.parse(data) : data;
                         if (parsed && parsed.action === 'admin_v2' && parsed.type === 'get_user_reports') {
@@ -848,7 +849,7 @@
         } else {
             console.error('[INIT] ❌ Помилка: tg або tg.sendData не знайдено');
         }
-        
+
         tg.expand();
         tg.enableClosingConfirmation();
 
@@ -1023,10 +1024,10 @@
                 console.error('Error loading user data:', error);
                 // Якщо API не працює, використовуємо дані зі state (якщо є)
                 if (user.odoo_url) {
-            document.getElementById('admin-odoo-url').value = user.odoo_url || '';
-            document.getElementById('admin-odoo-db').value = user.odoo_db || '';
-            document.getElementById('admin-odoo-user').value = user.odoo_username || '';
-            document.getElementById('admin-odoo-task').value = user.odoo_task_id || '';
+                    document.getElementById('admin-odoo-url').value = user.odoo_url || '';
+                    document.getElementById('admin-odoo-db').value = user.odoo_db || '';
+                    document.getElementById('admin-odoo-user').value = user.odoo_username || '';
+                    document.getElementById('admin-odoo-task').value = user.odoo_task_id || '';
                 }
             }
         }
@@ -1140,11 +1141,11 @@
             console.log('[WEBAPP] managingUserId:', state.managingUserId);
             console.log('[WEBAPP] userReports in state:', state.userReports);
             console.trace('[WEBAPP] Stack trace:');
-            
+
             // КРИТИЧНО: Блокуємо будь-які виклики tg.sendData з get_user_reports
             // Якщо хтось намагається викликати tg.sendData з get_user_reports, ми блокуємо це
             const originalSendData = tg.sendData;
-            tg.sendData = function(data) {
+            tg.sendData = function (data) {
                 try {
                     const parsed = typeof data === 'string' ? JSON.parse(data) : data;
                     if (parsed && parsed.action === 'admin_v2' && parsed.type === 'get_user_reports') {
@@ -1156,24 +1157,24 @@
                     return originalSendData.call(this, data);
                 }
             };
-            
+
             if (!state.managingUserId) {
                 alert('Помилка: не вибрано користувача');
                 // Відновлюємо originalSendData
                 tg.sendData = originalSendData;
                 return;
             }
-            
+
             const modal = document.getElementById('reports-modal');
             const title = document.getElementById('reports-modal-title');
             const user = state.users.find(u => u.id == state.managingUserId);
 
             title.textContent = `Звіти: ${user?.username || 'ID: ' + state.managingUserId}`;
-            
+
             // Показуємо модальне вікно одразу
             modal.style.display = 'flex';
             const list = document.getElementById('reports-list');
-            
+
             // Перевіряємо, чи вже є звіти в state (завантажені при відкритті модального вікна користувача)
             if (state.userReports && state.userReports.length > 0) {
                 console.log('Using cached reports from state');
@@ -1181,7 +1182,7 @@
                 loadUserReports(state.userReports);
                 return;
             }
-            
+
             console.log('Loading reports via API');
             list.innerHTML = '<div class="subtitle" style="text-align:center; padding: 20px;">Завантаження...</div>';
 
@@ -1250,9 +1251,9 @@
                             ${report.tasks && report.tasks.length > 0 ? `
                                 <div style="margin-top: 8px; font-size: 13px;">
                                     ${report.tasks.slice(0, 2).map(t => {
-                                        const taskText = t.text || t.task || 'Без назви';
-                                        return `<div style="color: var(--secondary-text);">• ${taskText}</div>`;
-                                    }).join('')}
+                const taskText = t.text || t.task || 'Без назви';
+                return `<div style="color: var(--secondary-text);">• ${taskText}</div>`;
+            }).join('')}
                                     ${report.tasks.length > 2 ? `<div style="color: var(--secondary-text);">... та ще ${report.tasks.length - 2}</div>` : ''}
                                 </div>
                             ` : ''}
@@ -1426,32 +1427,32 @@
             // Initialization via URL data
             const urlParams = new URLSearchParams(window.location.search);
             const rawData = urlParams.get('data');
-            
+
             // Функція для ініціалізації даних
             async function initializeApp(initData) {
-                    console.log('Ініціалізація даними:', initData);
+                console.log('Ініціалізація даними:', initData);
 
-                    state.isAdmin = initData.is_admin;
-                    state.settings = initData.settings;
-                    state.users = initData.admin?.users_list || [];
+                state.isAdmin = initData.is_admin;
+                state.settings = initData.settings;
+                state.users = initData.admin?.users_list || [];
                 state.admin = initData.admin || {};
 
-                    // Update UI
-                    if (state.isAdmin) {
-                        document.getElementById('nav-admin').style.display = 'flex';
+                // Update UI
+                if (state.isAdmin) {
+                    document.getElementById('nav-admin').style.display = 'flex';
                     document.getElementById('admin-total-users').textContent = initData.admin?.total_users || 0;
                     document.getElementById('admin-pending-users').textContent = initData.admin?.pending_users || 0;
-                        renderUserList(state.users);
-                    }
+                    renderUserList(state.users);
+                }
 
-                    // Update Settings Tab
-                    document.getElementById('set-time').value = state.settings.reminder_time;
-                    document.getElementById('set-daily-reminders').checked = state.settings.daily_reminders;
-                    document.getElementById('set-workday-reminders').checked = state.settings.workday_reminders;
-                    document.getElementById('set-workday-start').value = state.settings.workday_start;
-                    document.getElementById('set-workday-end').value = state.settings.workday_end;
-                    document.getElementById('set-workday-interval').value = state.settings.workday_interval;
-                
+                // Update Settings Tab
+                document.getElementById('set-time').value = state.settings.reminder_time;
+                document.getElementById('set-daily-reminders').checked = state.settings.daily_reminders;
+                document.getElementById('set-workday-reminders').checked = state.settings.workday_reminders;
+                document.getElementById('set-workday-start').value = state.settings.workday_start;
+                document.getElementById('set-workday-end').value = state.settings.workday_end;
+                document.getElementById('set-workday-interval').value = state.settings.workday_interval;
+
                 // Update Admin Settings
                 if (state.isAdmin && state.settings.show_hours_in_reports !== undefined) {
                     document.getElementById('admin-show-hours').checked = state.settings.show_hours_in_reports;
@@ -1466,10 +1467,10 @@
                     badge.style.color = '#1e8e3e';
                 }
 
-                    toggleWorkdayDetails(state.settings.workday_reminders);
+                toggleWorkdayDetails(state.settings.workday_reminders);
 
-                    // Update History
-                    renderHistory(initData.history);
+                // Update History
+                renderHistory(initData.history);
 
                 // Admin SPA Pre-load Decompression
                 if (state.isAdmin && initData.admin?.recent_reports) {
@@ -1496,7 +1497,7 @@
                     }
                 }
             }
-            
+
             if (rawData) {
                 // Дані передані через URL (відкриття через бота)
                 try {
@@ -1508,10 +1509,11 @@
             } else {
                 // Дані не передані через URL - спробуємо отримати через Telegram WebApp API
                 console.log('Дані не передані через URL, перевіряємо tg.initDataUnsafe...');
-                const userId = tg?.initDataUnsafe?.user?.id;
-                
+                const urlParams = new URLSearchParams(window.location.search);
+                const userId = urlParams.get('tg_id') || tg?.initDataUnsafe?.user?.id;
+
                 if (userId) {
-                    console.log(`Знайдено user_id через Telegram WebApp API: ${userId}`);
+                    console.log(`Використовуємо user_id: ${userId}`);
                     // Отримуємо дані через API
                     const apiUrl = 'https://128-140-40-178.sslip.io/api';
                     try {
@@ -1519,7 +1521,7 @@
                         if (response.ok) {
                             const apiData = await response.json();
                             console.log('Отримано дані з API:', apiData);
-                            
+
                             // Форматуємо дані в формат, який очікує initializeApp
                             const initData = {
                                 is_admin: apiData.is_admin || false,
@@ -1527,7 +1529,7 @@
                                 admin: apiData.admin || {},
                                 history: apiData.history || []
                             };
-                            
+
                             await initializeApp(initData);
                             // Приховуємо loading після успішної ініціалізації
                             document.getElementById('loading').style.display = 'none';
